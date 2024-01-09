@@ -1,18 +1,18 @@
-# import os
 import math
-
-# import csv
 import customtkinter as ctk
-
 from data import data as dataLib
+import sqlite3
 
 
 class main(ctk.CTk):
     def __init__(self):
         super().__init__()
+        self.conn = sqlite3.connect("limits.db")
+        self.cur = self.conn.cursor()
         self.title("Stiffness calculator")
         self.W = 900
         self.H = 800
+
         self.modeNames = ["Select Mode", "PR", "OP", "VW", "SQ"]
         self.geometry(
             str(self.W)
@@ -23,9 +23,9 @@ class main(ctk.CTk):
             + "+"
             + str(int((self.winfo_screenheight() - self.H) / 2))
         )
+
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
-
         self.elastic_modulus = -1
         self.density = -1
         self.shrinkage = -1
@@ -36,17 +36,6 @@ class main(ctk.CTk):
         self.s1 = -1  # wall_thickness
         self.ppd = -1
         self.s4 = -1  # pp_thickness
-
-        self.ppwt = {
-            27: 90,
-            34: 130,
-            42: 170,
-            54: 230,
-            65: 380,
-            75: 400,
-            90: 620,
-            110: 840,
-        }
 
         # Creaeting Frames
 
@@ -106,6 +95,12 @@ class main(ctk.CTk):
         #
 
         # raw material
+        self.rawMaterialError = ctk.CTkLabel(
+            self.rawMaterialFrame, text="", text_color="red"
+        )
+        self.rawMaterialError.grid(
+            row=0, column=1, padx=10, pady=5, columnspan=3, sticky="w"
+        )
         self.rawMaterilaLabel = ctk.CTkLabel(
             self.rawMaterialFrame,
             text="Raw Material:",
@@ -170,10 +165,16 @@ class main(ctk.CTk):
         #
 
         # production
+        self.productionError = ctk.CTkLabel(
+            self.productionFrame, text="", text_color="red"
+        )
+        self.productionError.grid(
+            row=0, column=1, padx=10, pady=5, columnspan=3, sticky="w"
+        )
         self.productionName = ctk.CTkLabel(
             self.productionFrame, fg_color="transparent", text="Production: "
         )
-        self.productionName.grid(row=0, column=0, padx=10, pady=5, columnspan=1)
+        self.productionName.grid(row=0, column=0, padx=5, pady=5, columnspan=1, sticky="w")
         self.pipeLengthLabel = ctk.CTkLabel(
             self.productionFrame, fg_color="transparent", text="Pipe Length"
         )
@@ -257,6 +258,12 @@ class main(ctk.CTk):
         #
 
         # machine limits
+        self.machineLimitsError = ctk.CTkLabel(
+            self.machineLimitsFrame, text="", text_color="red"
+        )
+        self.machineLimitsError.grid(
+            row=1, column=0, padx=10, pady=5, sticky="nw", rowspan=2
+        )
         self.machineLimitsFrame.grid_rowconfigure(0, weight=1)
         self.machineLimitsFrame.grid_columnconfigure(0, weight=1)
 
@@ -499,15 +506,9 @@ class main(ctk.CTk):
         #
 
     def Error(self, entryType, errorType, number):
-        # error = ctk.CTkInputDialog(
-        #     self,
-        #     title="Error",
-        #     text=(str(entryType) + " must be " + str(errorType) + ": " + str(number)),
-        # )
-
         error = ctk.CTkInputDialog(
             text=(str(entryType) + " must be " + str(errorType) + ": " + str(number)),
-            title="Error", 
+            title="Error",
         )
         error.geometry(
             "350x200"
@@ -519,26 +520,76 @@ class main(ctk.CTk):
 
         flag = False
 
-        if (
-            errorType.toLowerCase() == "greater than"
-            and float(error.get_input()) > number
-        ):
-            flag = True
-        elif (
-            errorType.toLowerCase() == "less than" and float(error.get_input()) < number
-        ):
-            flag = True
-        elif (
-            errorType.toLowerCase() == "equal to" and float(error.get_input()) == number
-        ):
-            flag = True
-        elif (
-            errorType.toLowerCase() == "not equal to"
-            and float(error.get_input()) != number
-        ):
-            flag = True
+        inputNumber = error.get_input()
 
-        return error.get_input() if flag else self.Error(entryType, errorType, number)
+        if errorType.lower() == "at least":
+            if float(inputNumber) >= float(number):
+                flag = True
+        elif errorType.lower() == "at most":
+            if float(inputNumber) <= float(number):
+                flag = True
+        elif errorType.lower() == "equal to":
+            if float(inputNumber) == float(number):
+                flag = True
+        elif errorType.lower() == "not equal to":
+            if float(inputNumber) != float(number):
+                flag = True
+        else:
+            error.destroy()
+            return
+
+        if flag:
+            return inputNumber
+
+        error.destroy()
+        input = self.Error(entryType, errorType, number)
+        return input
+
+    def Error(self, Frame, entryName, entryType, errorType, number):
+        flag = False
+        if Frame == self.rawMaterialFrame:
+            self.rawMaterialError.configure(
+                text=(
+                    str(entryType) + " must be " + str(errorType) + ": " + str(number)
+                )
+            )
+        elif Frame == self.productionFrame:
+            self.productionError.configure(
+                text=(
+                    str(entryType) + " must be " + str(errorType) + ": " + str(number)
+                )
+            )
+        elif Frame == self.machineLimitsFrame:
+            self.machineLimitsError.configure(
+                text=(
+                    str(entryType) + " must be " + str(errorType) + ": " + str(number)
+                )
+            )
+
+        inputNumber = entryName.get()
+
+        if errorType.lower() == "at least":
+            if float(inputNumber) >= float(number):
+                flag = True
+        elif errorType.lower() == "at most":
+            if float(inputNumber) <= float(number):
+                flag = True
+        elif errorType.lower() == "equal to":
+            if float(inputNumber) == float(number):
+                flag = True
+        elif errorType.lower() == "not equal to":
+            if float(inputNumber) != float(number):
+                flag = True
+        else:
+            return
+
+        if flag:
+            if Frame == self.rawMaterialFrame:
+                self.rawMaterialError.configure(text="")
+            elif Frame == self.productionFrame:
+                self.productionError.configure(text="")
+            elif Frame == self.machineLimitsFrame:
+                self.machineLimitsError.configure(text="")
 
     def openData(self):
         data = dataLib()
@@ -621,7 +672,6 @@ class main(ctk.CTk):
         #
 
     def PR(self):  # show widgets related to PR
-        self.Error("Density", "greater than", 0)
         self.densityLabel.grid(row=1, column=0, padx=5, pady=5)
         self.densityEntry.grid(row=1, column=1, padx=5, pady=5)
         self.densityUnitLabel.grid(row=1, column=2, padx=1, pady=5)
@@ -715,7 +765,44 @@ class main(ctk.CTk):
 
         self.pipe_length = float(self.pipeLengthEnry.get())
         self.pd = float(self.pipeDiameterEnry.get())
-        self.p = float(self.pitchEntry.get())
+        self.p = float(self.pitchEntry.get()) - 15
+        self.cur.execute("SELECT c3 FROM diameter WHERE c1=" + str(int(self.pd)))
+        minWallThickness = self.cur.fetchall()
+        self.cur.execute("SELECT c5 FROM moldSize WHERE c1=" + str(int(self.pd)))
+        newPd = self.cur.fetchall()
+        try:
+            newPd = newPd[0]
+        except:
+            print("error: No data for this pipe diameter in mold size")
+            self.pd = [0]
+        print(newPd[0])
+        self.pd = float(newPd[0])
+        print(self.pd)
+        print(minWallThickness)
+        try:
+            minWallThickness = minWallThickness[0]
+        except:
+            print("error: No data for this pipe diameter in  wall thickness")
+            minWallThickness = [0]
+        print(minWallThickness)
+        minWallThickness = float(minWallThickness[0])
+        print(minWallThickness)
+        while minWallThickness > float(self.WallThicknessEntry.get()):
+            self.WallThicknessEntry.configure(
+                fg_color="#6e4441", border_color="#f51505"
+            )
+            self.WallThicknessEntry.insert(
+                0,
+                self.Error(
+                    self.productionFrame,
+                    self.WallThicknessEntry,
+                    "Wall thickness",
+                    "at least",
+                    str(minWallThickness),
+                ),
+            )
+        self.productionError.configure(text="")
+        self.WallThicknessEntry.configure(fg_color="grey20", border_color="grey30")
         self.s1 = (
             float(self.WallThicknessEntry.get()) * float(100 - self.shrinkage) / 100.0
         )
@@ -759,81 +846,87 @@ class main(ctk.CTk):
         W3 = V3 * self.density / 1000000.0
         W4 = V4 * self.density / 1000000.0
         W = W1 + W2 + W3 + W4
-        Wk = self.ppwt[self.ppd] / 1000.0
+        self.cur.execute("SELECT c2 FROM ppwt WHERE c1=" + str(int(self.ppd)))
+        tempWk = self.cur.fetchall()
+        try:
+            tempWk = tempWk[0]
+        except:
+            print("error: No data for this pp weight in ppwt")
+            tempWk = [0]
+        tempWk = float(tempWk[0])
+        Wk = tempWk / 1000.0
         Wp = Lpp * Wk / 1000.0
         Wz = W1 + W2 + W3 + W4 + Wp
         W0 = Wz - W2 / 2.0
         pp_dist = self.p - self.ppd - self.s4 * 2.0
         if math.trunc(Sn) in required_Sn:
-            self.SnLabel.configure(text="Sn: " + str(round(Sn, 2)) + " kN/m2")
-            self.W1Label.configure(text="W1: " + str(round(W1, 2)) + " kg")
+            self.SnLabel.configure(text="Stiffness: " + str(round(Sn, 2)) + " kN/m2")
+            self.W1Label.configure(
+                text="Socket pipe body weight: " + str(round(W1, 2)) + " kg"
+            )
             self.W2Label.configure(
-                text="W2: "
+                text="Socket pipe body weight: "
                 + str(round(W2, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
             self.W3Label.configure(
-                text="W3: "
+                text="Flat film tube weight: "
                 + str(round(W3, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
             self.W4Label.configure(
-                text="W4: "
+                text="Coated film body weight: "
                 + str(round(W4, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
             self.WLabel.configure(
-                text="W: "
+                text="Pipe weight excluding pp pipe: "
                 + str(round(W, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
             self.WkLabel.configure(
-                text="Wk: "
-                + str(round(Wk, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
+                text="PP pipe weight: " + str(round(Wk, 2)) + " kg/m"
             )
             self.WpLabel.configure(
-                text="Wp: "
+                text="PP pipe weight: "
                 + str(round(Wp, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
             self.WzLabel.configure(
-                text="Wz: "
+                text="Pipe weight: "
                 + str(round(Wz, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
             self.W0Label.configure(
-                text="W0: "
+                text="Pipe body weight: "
                 + str(round(W0, 2))
                 + " kg/"
                 + str(self.pipe_length / 1000.0)
                 + "m"
             )
 
-            self.SnLabel.grid(row=0, column=0, padx=10, pady=5)
-            self.W1Label.grid(row=1, column=0, padx=10, pady=5)
-            self.W2Label.grid(row=2, column=0, padx=10, pady=5)
-            self.W3Label.grid(row=3, column=0, padx=10, pady=5)
-            self.W4Label.grid(row=4, column=0, padx=10, pady=5)
-            self.WLabel.grid(row=0, column=2, padx=10, pady=5)
-            self.WkLabel.grid(row=1, column=2, padx=10, pady=5)
-            self.WpLabel.grid(row=2, column=2, padx=10, pady=5)
-            self.WzLabel.grid(row=3, column=2, padx=10, pady=5)
-            self.W0Label.grid(row=4, column=2, padx=10, pady=5)
+            self.SnLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+            self.W1Label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+            self.W2Label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+            self.W3Label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+            self.W4Label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
+            self.WLabel.grid(row=0, column=2, padx=10, pady=5, sticky="w")
+            self.WkLabel.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+            self.WpLabel.grid(row=2, column=2, padx=10, pady=5, sticky="w")
+            self.WzLabel.grid(row=3, column=2, padx=10, pady=5, sticky="w")
+            self.W0Label.grid(row=4, column=2, padx=10, pady=5, sticky="w")
 
 
 main = main()
