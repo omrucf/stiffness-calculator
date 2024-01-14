@@ -148,7 +148,7 @@ class main(ctk.CTk):
         self.modeFrame = ctk.CTkFrame(
             self.menuBar, width=self.W * (1 - 0.72222), height=(self.H / 20)
         )
-        self.modeFrame.grid(padx=5, pady=10, sticky="nw", row=0, column=0)
+        self.modeFrame.grid(padx=5, pady=10, sticky="nw", row=10, column=0)
 
         #
 
@@ -667,12 +667,17 @@ class main(ctk.CTk):
         self.tablesLabel = ctk.CTkLabel(
             self.menuBar, fg_color="transparent", text="Tables"
         )
-        self.tablesLabel.grid(row=1, column=0, pady=5)
+        self.tablesLabel.grid(row=0, column=0, pady=5)
 
         self.profilesLabel = ctk.CTkLabel(
             self.menuBar, fg_color="transparent", text="Profiles"
         )
-        self.profilesLabel.grid(row=6, column=0, pady=5)
+        self.profilesLabel.grid(row=5, column=0, pady=5)
+
+        self.modesLabel = ctk.CTkLabel(
+            self.menuBar, fg_color="transparent", text="Modes"
+        )
+        self.modesLabel.grid(row=9, column=0, pady=5)
 
         #
 
@@ -685,44 +690,44 @@ class main(ctk.CTk):
             text="ppwt",
             command=lambda: self.openData("limits.db", "ppwt"),
         )
-        self.ppwtTable.grid(row=2, column=0, pady=5)
+        self.ppwtTable.grid(row=1, column=0, pady=5)
         self.diameterTable = ctk.CTkButton(
             self.menuBar,
             text="Diameter",
             command=lambda: self.openData("limits.db", "diameter"),
         )
-        self.diameterTable.grid(row=3, column=0, pady=5)
+        self.diameterTable.grid(row=2, column=0, pady=5)
         self.moldSizeTable = ctk.CTkButton(
             self.menuBar,
             text="mold size",
             command=lambda: self.openData("limits.db", "moldSize"),
         )
-        self.moldSizeTable.grid(row=4, column=0, pady=5)
+        self.moldSizeTable.grid(row=3, column=0, pady=5)
         self.moldDiameterTable = ctk.CTkButton(
             self.menuBar,
             text="mold diameter",
             command=lambda: self.openData("limits.db", "moldDiameter"),
         )
-        self.moldDiameterTable.grid(row=5, column=0, pady=5)
+        self.moldDiameterTable.grid(row=4, column=0, pady=5)
         self.materialProfileB = ctk.CTkButton(
             self.menuBar,
             text="material",
             command=lambda: self.openData("profiles.db", "rawMaterial"),
         )
 
-        self.materialProfileB.grid(row=7, column=0, pady=5)
+        self.materialProfileB.grid(row=6, column=0, pady=5)
         self.flatDiaProfileB = ctk.CTkButton(
             self.menuBar,
             text="flat die",
             command=lambda: self.openData("profiles.db", "flatDie"),
         )
-        self.flatDiaProfileB.grid(row=8, column=0, pady=5)
+        self.flatDiaProfileB.grid(row=7, column=0, pady=5)
         self.claddingDieProfileB = ctk.CTkButton(
             self.menuBar,
             text="cladding die",
             command=lambda: self.openData("profiles.db", "claddingDie"),
         )
-        self.claddingDieProfileB.grid(row=9, column=0, pady=5)
+        self.claddingDieProfileB.grid(row=8, column=0, pady=5)
 
         self.saveMaterialB = ctk.CTkButton(
             self.rawMaterialFrame, text="Save", command=self.saveMaterial, width=100
@@ -1316,12 +1321,11 @@ class main(ctk.CTk):
         #
 
     def VW(self):
-        
         pass
 
     def calculateVW(self):
         pass
-    
+
     def calculatePR(self):
         self.density = float(self.densityEntry.get())
         self.elastic_modulus = float(self.elasticEntry.get())
