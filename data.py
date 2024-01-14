@@ -1,18 +1,25 @@
 import customtkinter as ctk
-import csv
-import os
-import tkinter as tk
+import sqlite3
 
 
 class data(ctk.CTk):
-    def __init__(self):
+    def __init__(self, file, table):
         super().__init__()
-        self.data = []
-        self.filepath = ""
-        self.headers = []
-        self.rowsData = []
         self.widths = [100, 50, 200]
         self.itr = -1
+
+        self.file = file
+        self.table = table
+
+        self.conn = sqlite3.connect(self.file)
+        self.cur = self.conn.cursor()
+
+        self.cur.execute("SELECT * FROM " + self.table)
+
+        self.headers = [description[0] for description in self.cur.description[1::]]
+        self.rowsData = self.cur.fetchall()
+        self.numRows = len(self.rowsData)
+        self.entries = []
 
         self.frame = ctk.CTkScrollableFrame(
             self,
@@ -33,16 +40,6 @@ class data(ctk.CTk):
             + str(int((self.winfo_screenheight() - 400) / 2)),
         )
 
-        with open("data.csv", "r", newline="", encoding="utf-8") as f:
-            if os.stat("data.csv").st_size > 0:
-                self.headers = f.readline().strip().split(",")
-                while True:
-                    row = f.readline().strip()
-                    if not row:
-                        break
-                    self.rowsData.append(row.split(","))
-            f.close()
-
         if len(self.headers) > 0:
             for col, header in enumerate(self.headers):
                 self.label = ctk.CTkLabel(self.frame, text=header)
@@ -51,10 +48,11 @@ class data(ctk.CTk):
 
         if len(self.rowsData) > 0:
             for row, row_data in enumerate(self.rowsData, start=1):
-                for col, value in enumerate(row_data):
+                for col, value in enumerate(row_data[1::]):
                     entry = ctk.CTkEntry(self.frame, width=100)
-                    entry.insert(tk.END, value)
+                    entry.insert(ctk.END, value)
                     entry.grid(row=row, column=col, padx=10, pady=5)
+                    self.entries.append(entry)
                 self.itr += 1
 
         self.newRow()
@@ -68,45 +66,59 @@ class data(ctk.CTk):
         saveButton.grid(pady=5)
 
     def save(self):
+        flag = False
         data = []
-        print(self.frame.grid_slaves(row=2, column=0)[0].get())
-        print(len(self.rowsData))
-        for row in range((len(self.rowsData))):
-            self.rowsData[row] = []
-            for col in range(len(self.headers)):
-                if self.frame.grid_slaves(row=row + 1, column=col)[0].get() != "":
-                    self.rowsData[row].append(
-                        self.frame.grid_slaves(row=row + 1, column=col)[0].get()
-                    )
-                else:
-                    del self.rowsData[len(self.rowsData) - 1]
-                    break
-        for row in range(len(self.rowsData), len(self.rowsData) + 5):
-            self.rowsData.append([])
-            for col in range(len(self.headers)):
-                if self.frame.grid_slaves(row=row + 1, column=col)[0].get() != "":
-                    self.rowsData[row].append(
-                        self.frame.grid_slaves(row=row + 1, column=col)[0].get()
-                    )
-                else:
-                    del self.rowsData[len(self.rowsData) - 1]
-                    break
+        tupleTemp = []
+        for i, entry in enumerate(self.entries):
+            if i % len(self.headers) == 0 and flag:
+                data.append(tuple(tupleTemp))
+                tupleTemp = []
+                flag = False
+            if entry.get() != "":
+                flag = True
+                tupleTemp.append(entry.get())
+            if flag and entry.get() == "":
+                raise Exception("Please fill all the fields")
 
-        with open("data.csv", "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(self.headers)
-            for row in self.rowsData:
-                writer.writerow(row)
-            f.close()
+        self.cur.execute("""DELETE FROM """ + self.table + ";")
+
+        for i, row in enumerate(data):
+            self.cur.execute(
+                """INSERT INTO """
+                + self.table
+                + str(tuple(self.headers))
+                + """ VALUES """
+                + str(row)
+                + ";"
+            )
+        self.conn.commit()
         self.destroy()
 
     def newRow(self, event=None):
-        print(self.frame.grid_slaves(row=self.itr - 1, column=0)[0].get())
-        if self.frame.grid_slaves(row=self.itr - 1, column=0)[0].get() != "":
-            for col, headers in enumerate(self.headers):
-                entry = ctk.CTkEntry(self.frame, width=100)
-                entry.grid(
-                    padx=10, pady=5, column=col, row=len(self.rowsData) + 1 + self.itr
-                )
+        # print(self.frame.grid_slaves(row=self.itr - 1, column=0)[0].get())
+        # if self.frame.grid_slaves(row=self.itr - 1, column=0)[0].get() != "":
+        data = []
+        for i, entry in enumerate(self.entries):
+            if entry.get() != "":
+                data.append(entry.get())
+        if len(data) > self.itr * len(self.headers):
+            return
+        for col, headers in enumerate(self.headers):
+            entry = ctk.CTkEntry(self.frame, width=100)
+            entry.grid(
+                padx=10, pady=5, column=col, row=len(self.rowsData) + 1 + self.itr
+            )
+
+            if col == 0:
                 entry.bind("<FocusIn>", self.newRow)
-            self.itr += 1
+                entry.bind("<FocusOut>", self.nothing)
+            self.entries.append(entry)
+        self.itr += 1
+
+    def nothing(self, event=None):
+        self.bind_all("<FocusIn>", self.nothing)
+        pass
+
+
+# 
+

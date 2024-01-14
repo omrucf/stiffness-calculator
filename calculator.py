@@ -7,12 +7,79 @@ import sqlite3
 class main(ctk.CTk):
     def __init__(self):
         super().__init__()
+        # creating databases
         self.limitsConn = sqlite3.connect("limits.db")
         self.limitsCur = self.limitsConn.cursor()
         self.profilesConn = sqlite3.connect("profiles.db")
         self.profilesCur = self.profilesConn.cursor()
+        self.limitsCur.execute(
+            """ CREATE TABLE IF NOT EXISTS ppwt (
+                                        id integer PRIMARY KEY,
+                                        pp_weight REAL NOT NULL,
+                                        weight REAL NOT NULL
+                                    ); """
+        )
+        self.limitsCur.execute(
+            """ CREATE TABLE IF NOT EXISTS diameter (
+                                        id INTEGER PRIMARY KEY,
+                                        diameter REAL NOT NULL,
+                                        min_ID REAL NOT NULL,
+                                        min_wall_thickness REAL NOT NULL,
+                                        socket_outer_circum_BD REAL,
+                                        socket_outer_circum_AD REAL,
+                                        header_inner_circum REAL
+                                    ); """
+        )
+        self.limitsCur.execute(
+            """ CREATE TABLE IF NOT EXISTS moldSize (
+                                        id INTEGER PRIMARY KEY,
+                                        mold_size REAL NOT NULL,
+                                        header_inner_circum REAL NOT NULL,
+                                        body_circum REAL NOT NULL,
+                                        head_diameter2 REAL NOT NULL,
+                                        body_diameter3 REAL NOT NULL
+                                    ); """
+        )
+
+        self.limitsCur.execute(
+            """ CREATE TABLE IF NOT EXISTS moldDiameter (
+                                        id INTEGER PRIMARY KEY,
+                                        mold_diameter REAL NOT NULL,
+                                        mold_optimal_temperature REAL NOT NULL
+                                    ); """
+        )
+        self.limitsConn.commit()
+
+        self.profilesCur.execute(
+            """ CREATE TABLE IF NOT EXISTS rawMaterial (
+                                        id INTEGER PRIMARY KEY,
+                                        profile TEXT NOT NULL,
+                                        density REAL NOT NULL,
+                                        elastic_modulus REAL NOT NULL,
+                                        shrinkage REAL NOT NULL
+                                    ); """
+        )
+        self.profilesCur.execute(
+            """ CREATE TABLE IF NOT EXISTS flatDie (
+                                        id INTEGER PRIMARY KEY,
+                                        profile TEXT NOT NULL,
+                                        pitch REAL NOT NULL,
+                                        pitch_factor REAL NOT NULL,
+                                        thickness REAL NOT NULL
+                                    ); """
+        )
+        self.profilesCur.execute(
+            """ CREATE TABLE IF NOT EXISTS claddingDie (
+                                        id INTEGER PRIMARY KEY,
+                                        profile TEXT NOT NULL,
+                                        ppd REAL NOT NULL,
+                                        pp_thickness REAL NOT NULL
+                                    ); """
+        )
+        self.profilesConn.commit()
+        # app
         self.title("Stiffness calculator")
-        self.W = 900
+        self.W = 1300
         self.H = 800
 
         self.modeNames = ["Select Mode", "PR", "OP", "VW", "SQ"]
@@ -42,22 +109,19 @@ class main(ctk.CTk):
         # Creaeting Frames
 
         self.rawMaterialFrame = ctk.CTkFrame(
-            self, width=(self.W * 0.72222), height=(self.H / 11)
+            self, width=(self.W * 0.94444), height=(self.H / 11)
         )
         self.rawMaterialFrame.grid_propagate(False)
-        self.rawMaterialFrame.grid(padx=25, pady=10, sticky="ne", row=0, column=1)
-
-        self.modeFrame = ctk.CTkFrame(
-            self, width=self.W * (1 - 0.72222), height=(self.H / 20)
+        self.rawMaterialFrame.grid(
+            padx=5, pady=10, sticky="n", row=0, column=1, columnspan=2
         )
-        self.modeFrame.grid(padx=25, pady=10, sticky="nw", row=0, column=0)
 
         self.productionFrame = ctk.CTkFrame(
             self, width=(self.W * 0.94444), height=(self.H / 4) + 15
         )
         self.productionFrame.grid_propagate(False)
         self.productionFrame.grid(
-            padx=25, pady=10, sticky="n", row=1, column=0, columnspan=2
+            padx=5, pady=10, sticky="n", row=1, column=1, columnspan=2
         )
 
         self.machineLimitsFrame = ctk.CTkFrame(
@@ -65,7 +129,7 @@ class main(ctk.CTk):
         )
         self.machineLimitsFrame.grid_propagate(False)
         self.machineLimitsFrame.grid(
-            padx=25, pady=10, sticky="n", row=2, column=0, columnspan=2, rowspan=2
+            padx=5, pady=10, sticky="n", row=2, column=1, columnspan=2, rowspan=2
         )
         self.machineLimitsFrame.grid_propagate(False)
         self.resultsFrame = ctk.CTkFrame(
@@ -73,8 +137,18 @@ class main(ctk.CTk):
         )
         self.resultsFrame.grid_propagate(False)
         self.resultsFrame.grid(
-            padx=25, pady=10, sticky="n", row=4, column=0, columnspan=2, rowspan=2
+            padx=5, pady=10, sticky="n", row=4, column=1, columnspan=2, rowspan=2
         )
+        self.menuBar = ctk.CTkFrame(self, width=260, height=self.H - 20)
+        self.menuBar.grid_propagate(False)
+        self.menuBar.grid(
+            padx=10, pady=10, sticky="nw", row=0, column=0, columnspan=1, rowspan=5
+        )
+
+        self.modeFrame = ctk.CTkFrame(
+            self.menuBar, width=self.W * (1 - 0.72222), height=(self.H / 20)
+        )
+        self.modeFrame.grid(padx=5, pady=10, sticky="nw", row=0, column=0)
 
         #
 
@@ -94,22 +168,38 @@ class main(ctk.CTk):
         items = [item[0] for item in items]
         self.materialprofile = ctk.CTkOptionMenu(
             self.rawMaterialFrame,
-            values=["select profile"] + list(items) + ["New profile"],
+            values=["Material profiles"] + list(items) + ["New profile"],
             anchor="w",
             command=self.materialCommand,
             corner_radius=0,
+            dynamic_resizing=False,
         )
 
         items = self.profilesCur.execute("SELECT profile FROM flatDie").fetchall()
         items = [item[0] for item in items]
 
-        self.dieProfile = ctk.CTkOptionMenu(
+        self.flatDieProfile = ctk.CTkOptionMenu(
             self.productionFrame,
-            values=["select profile"] + list(items) + ["New profile"],
+            values=["Flat die profiles"] + list(items) + ["New profile"],
             command=self.dieCommand,
             anchor="w",
             corner_radius=0,
+            dynamic_resizing=False,
         )
+
+        items = self.profilesCur.execute("SELECT profile FROM claddingDie").fetchall()
+        items = [item[0] for item in items]
+
+        self.claddingDieProfile = ctk.CTkOptionMenu(
+            self.productionFrame,
+            values=list(items) + ["New profile"],
+            command=self.claddingCommand,
+            anchor="w",
+            corner_radius=0,
+            dynamic_resizing=False,
+            width=165,
+        )
+        self.claddingDieProfile.set("Cladding die profiles")
 
         #
 
@@ -230,6 +320,17 @@ class main(ctk.CTk):
             self.productionFrame, placeholder_text="", width=150
         )
 
+        self.claddingNameLabel = ctk.CTkLabel(
+            self.productionFrame,
+            text="Profile Name",
+            fg_color="transparent",
+            anchor="w",
+            width=10,
+        )
+        self.claddingNameEntry = ctk.CTkEntry(
+            self.productionFrame, placeholder_text="", width=150
+        )
+
         self.pipeLengthLabel = ctk.CTkLabel(
             self.productionFrame, fg_color="transparent", text="Pipe Length"
         )
@@ -302,7 +403,7 @@ class main(ctk.CTk):
             self.productionFrame, fg_color="transparent", text="(mm)"
         )
         self.WallThicknessEntry = ctk.CTkEntry(
-            self.productionFrame, placeholder_text="", width=70
+            self.productionFrame, placeholder_text="", width=70, state="disabled"
         )
         self.WallThicknessEntry.grid_forget()
 
@@ -348,7 +449,7 @@ class main(ctk.CTk):
             row=1, column=0, padx=10, pady=5, sticky="nw", rowspan=2
         )
         self.machineLimitsFrame.grid_rowconfigure(0, weight=1)
-        self.machineLimitsFrame.grid_columnconfigure(0, weight=1)
+        # self.machineLimitsFrame.grid_columnconfigure(0, weight=1)
 
         self.machineName = ctk.CTkLabel(
             self.machineLimitsFrame, fg_color="transparent", text="Machine: "
@@ -561,7 +662,17 @@ class main(ctk.CTk):
 
         #
 
-        #
+        # labels
+
+        self.tablesLabel = ctk.CTkLabel(
+            self.menuBar, fg_color="transparent", text="Tables"
+        )
+        self.tablesLabel.grid(row=1, column=0, pady=5)
+
+        self.profilesLabel = ctk.CTkLabel(
+            self.menuBar, fg_color="transparent", text="Profiles"
+        )
+        self.profilesLabel.grid(row=6, column=0, pady=5)
 
         #
 
@@ -569,14 +680,49 @@ class main(ctk.CTk):
 
         # buttons
 
-        self.calculateButton = ctk.CTkButton(
-            self.machineLimitsFrame, text="calculate", command=self.calculate
+        self.ppwtTable = ctk.CTkButton(
+            self.menuBar,
+            text="ppwt",
+            command=lambda: self.openData("limits.db", "ppwt"),
         )
-        self.calculateButton.grid(row=6, column=0, padx=10, pady=5, sticky="sw")
-        self.dataButton = ctk.CTkButton(
-            self.machineLimitsFrame, text="Edit Data", command=self.openData
+        self.ppwtTable.grid(row=2, column=0, pady=5)
+        self.diameterTable = ctk.CTkButton(
+            self.menuBar,
+            text="Diameter",
+            command=lambda: self.openData("limits.db", "diameter"),
         )
-        self.dataButton.grid(row=5, column=0, padx=10, pady=5, sticky="sw")
+        self.diameterTable.grid(row=3, column=0, pady=5)
+        self.moldSizeTable = ctk.CTkButton(
+            self.menuBar,
+            text="mold size",
+            command=lambda: self.openData("limits.db", "moldSize"),
+        )
+        self.moldSizeTable.grid(row=4, column=0, pady=5)
+        self.moldDiameterTable = ctk.CTkButton(
+            self.menuBar,
+            text="mold diameter",
+            command=lambda: self.openData("limits.db", "moldDiameter"),
+        )
+        self.moldDiameterTable.grid(row=5, column=0, pady=5)
+        self.materialProfileB = ctk.CTkButton(
+            self.menuBar,
+            text="material",
+            command=lambda: self.openData("profiles.db", "rawMaterial"),
+        )
+
+        self.materialProfileB.grid(row=7, column=0, pady=5)
+        self.flatDiaProfileB = ctk.CTkButton(
+            self.menuBar,
+            text="flat die",
+            command=lambda: self.openData("profiles.db", "flatDie"),
+        )
+        self.flatDiaProfileB.grid(row=8, column=0, pady=5)
+        self.claddingDieProfileB = ctk.CTkButton(
+            self.menuBar,
+            text="cladding die",
+            command=lambda: self.openData("profiles.db", "claddingDie"),
+        )
+        self.claddingDieProfileB.grid(row=9, column=0, pady=5)
 
         self.saveMaterialB = ctk.CTkButton(
             self.rawMaterialFrame, text="Save", command=self.saveMaterial, width=100
@@ -585,13 +731,23 @@ class main(ctk.CTk):
         self.saveDieB = ctk.CTkButton(
             self.productionFrame, text="Save", command=self.saveDie, width=100
         )
+        self.saveCladdingB = ctk.CTkButton(
+            self.productionFrame, text="Save", command=self.saveCladding, width=100
+        )
+
+        self.calculateButton = ctk.CTkButton(
+            self.menuBar, text="calculate", command=self.calculatePR
+        )
+        self.menuBar.grid_rowconfigure(20, weight=1)
+        self.calculateButton.grid(row=20, column=0, pady=5, sticky="s")
 
         #
 
         #
 
         #
-
+        # self.setResize(False)
+        self.resizable(False, False)
         #
 
         #
@@ -699,8 +855,8 @@ class main(ctk.CTk):
             elif Frame == self.machineLimitsFrame:
                 self.machineLimitsError.configure(text="")
 
-    def openData(self):
-        data = dataLib()
+    def openData(self, file, table):
+        data = dataLib(file, table)
         data.mainloop()
 
         #
@@ -714,16 +870,17 @@ class main(ctk.CTk):
         #
 
     def materialCommand(self, material):
-        if material != "New profile" and material != "select profile":
-            self.saveMaterialB.grid_forget()
-            self.materialNameLabel.grid_forget()
-            self.materialNameEntry.grid_forget()
-
+        if material != "select profile":
             items = self.profilesCur.execute(
                 "SELECT profile FROM rawMaterial"
             ).fetchall()
             items = [item[0] for item in items]
             self.materialprofile.configure(values=list(items) + ["New profile"])
+
+        if material != "New profile" and material != "select profile":
+            self.saveMaterialB.grid_forget()
+            self.materialNameLabel.grid_forget()
+            self.materialNameEntry.grid_forget()
 
             self.densityEntry.configure(state="normal")
             self.elasticEntry.configure(state="normal")
@@ -736,7 +893,7 @@ class main(ctk.CTk):
                 0,
                 str(
                     self.profilesCur.execute(
-                        "SELECT modulus FROM rawMaterial WHERE profile=?",
+                        "SELECT elastic_modulus FROM rawMaterial WHERE profile=?",
                         (material,),
                     ).fetchone()[0]
                 ),
@@ -764,26 +921,42 @@ class main(ctk.CTk):
             self.densityEntry.configure(state="normal")
             self.elasticEntry.configure(state="normal")
             self.shrinkageEntry.configure(state="normal")
-            self.materialNameLabel.grid(row=0, column=4, padx=5, pady=5, columnspan=2)
+            self.materialNameLabel.grid(row=0, column=17, padx=5, pady=5, columnspan=2)
             self.materialNameEntry.grid(
-                row=0, column=6, padx=5, pady=5, sticky="w", columnspan=2
+                row=0, column=19, padx=5, pady=5, sticky="w", columnspan=2
             )
             self.saveMaterialB.grid(
-                row=0, column=8, padx=5, pady=5, sticky="w", columnspan=2
+                row=0, column=21, padx=5, pady=5, sticky="w", columnspan=2
             )
 
     def dieCommand(self, die):
+        if die != "select profile":
+            items = self.profilesCur.execute("SELECT profile FROM flatDie").fetchall()
+            items = [item[0] for item in items]
+            self.flatDieProfile.configure(values=list(items) + ["New profile"])
         if die != "New profile" and die != "select profile":
+            self.saveDieB.grid_forget()
+            self.dieNameLabel.grid_forget()
+            self.dieNameEntry.grid_forget()
             self.pitchEntry.configure(state="normal")
             self.pitchFactorEntry.configure(state="normal")
+            self.WallThicknessEntry.configure(state="normal")
             flatdie = self.profilesCur.execute(
-                "SELECT die FROM flatDie WHERE profile=?", (die,)
+                "SELECT pitch FROM flatDie WHERE profile=?", (die,)
             ).fetchone()[0]
             factor = self.profilesCur.execute(
-                "SELECT factor FROM flatDie WHERE profile=?", (die,)
+                "SELECT pitch_factor FROM flatDie WHERE profile=?", (die,)
+            ).fetchone()[0]
+            thickness = self.profilesCur.execute(
+                "SELECT thickness FROM flatDie WHERE profile=?", (die,)
             ).fetchone()[0]
             self.pitchEntry.delete(0, ctk.END)
             self.pitchFactorEntry.delete(0, ctk.END)
+            self.WallThicknessEntry.delete(0, ctk.END)
+            self.WallThicknessEntry.insert(
+                0,
+                str(thickness),
+            )
             self.pitchEntry.insert(
                 0,
                 str(flatdie),
@@ -795,17 +968,67 @@ class main(ctk.CTk):
             self.calcPitch("")
             self.pitchEntry.configure(state="disabled")
             self.pitchFactorEntry.configure(state="disabled")
+            self.WallThicknessEntry.configure(state="disabled")
+
         elif die == "New profile":
             self.pitchEntry.configure(state="normal")
             self.pitchFactorEntry.configure(state="normal")
+            self.WallThicknessEntry.configure(state="normal")
             self.dieNameLabel.grid(
-                row=0, column=4, padx=5, pady=5, sticky="w", columnspan=2
+                row=0, column=17, padx=5, pady=5, sticky="w", columnspan=2
             )
             self.dieNameEntry.grid(
-                row=0, column=6, padx=5, pady=6, sticky="w", columnspan=2
+                row=0, column=19, padx=5, pady=6, sticky="w", columnspan=2
             )
             self.saveDieB.grid(
-                row=0, column=8, padx=5, pady=5, sticky="w", columnspan=2
+                row=0, column=21, padx=5, pady=5, sticky="w", columnspan=2
+            )
+
+        # create same function as dieCommand but use ppd and ppfilmthickness entries
+
+    def claddingCommand(self, die):
+        if die != "select profile":
+            items = self.profilesCur.execute(
+                "SELECT profile FROM claddingDie"
+            ).fetchall()
+            items = [item[0] for item in items]
+            self.claddingDieProfile.configure(values=list(items) + ["New profile"])
+        if die != "New profile" and die != "select profile":
+            self.saveCladdingB.grid_forget()
+            self.claddingNameLabel.grid_forget()
+            self.claddingNameEntry.grid_forget()
+            self.PPDiameterEntry.configure(state="normal")
+            self.PPFilmThicknessEntry.configure(state="normal")
+            ppd = self.profilesCur.execute(
+                "SELECT ppd FROM claddingDie WHERE profile=?", (die,)
+            ).fetchone()[0]
+            ppfilmthickness = self.profilesCur.execute(
+                "SELECT pp_thickness FROM claddingDie WHERE profile=?", (die,)
+            ).fetchone()[0]
+            self.PPDiameterEntry.delete(0, ctk.END)
+            self.PPFilmThicknessEntry.delete(0, ctk.END)
+            self.PPDiameterEntry.insert(
+                0,
+                str(ppd),
+            )
+            self.PPFilmThicknessEntry.insert(
+                0,
+                str(ppfilmthickness),
+            )
+            self.PPDiameterEntry.configure(state="disabled")
+            self.PPFilmThicknessEntry.configure(state="disabled")
+
+        elif die == "New profile":
+            self.PPDiameterEntry.configure(state="normal")
+            self.PPFilmThicknessEntry.configure(state="normal")
+            self.claddingNameLabel.grid(
+                row=1, column=17, padx=5, pady=5, sticky="w", columnspan=2
+            )
+            self.claddingNameEntry.grid(
+                row=1, column=19, padx=5, pady=6, sticky="w", columnspan=2
+            )
+            self.saveCladdingB.grid(
+                row=1, column=21, padx=5, pady=5, sticky="w", columnspan=2
             )
 
     def saveMaterial(self):
@@ -819,7 +1042,7 @@ class main(ctk.CTk):
             if self.shrinkageEntry.get() == "":
                 raise Exception("please enter shrinkage rate")
             self.profilesCur.execute(
-                "INSERT INTO rawMaterial (profile, modulus, density, shrinkage) VALUES (?, ?, ?, ?)",
+                "INSERT INTO rawMaterial (profile, elastic_modulus, density, shrinkage) VALUES (?, ?, ?, ?)",
                 (
                     self.materialNameEntry.get(),
                     self.elasticEntry.get(),
@@ -849,19 +1072,22 @@ class main(ctk.CTk):
                 raise Exception("please enter flat die")
             if self.pitchFactorEntry.get() == "":
                 raise Exception("please enter flat die factor")
+            if self.WallThicknessEntry.get() == "":
+                raise Exception("please enter wall thickness")
             self.profilesCur.execute(
-                "INSERT INTO flatDie (profile, die, factor) VALUES (?, ?, ?)",
+                "INSERT INTO flatDie (profile, pitch, pitch_factor, thickness) VALUES (?, ?, ?, ?)",
                 (
                     self.dieNameEntry.get(),
                     self.pitchEntry.get(),
                     self.pitchFactorEntry.get(),
+                    float(self.WallThicknessEntry.get()),
                 ),
             )
             self.profilesConn.commit()
             items = self.profilesCur.execute("SELECT profile FROM flatDie").fetchall()
             items = [item[0] for item in items]
-            self.dieProfile.configure(values=list(items) + ["New profile"])
-            self.dieProfile.set(self.dieNameEntry.get())
+            self.flatDieProfile.configure(values=list(items) + ["New profile"])
+            self.flatDieProfile.set(self.dieNameEntry.get())
             self.dieNameEntry.delete(0, ctk.END)
             self.dieNameLabel.grid_forget()
             self.dieNameEntry.grid_forget()
@@ -870,61 +1096,112 @@ class main(ctk.CTk):
         except Exception as e:
             print("error: " + str(e))
 
+    def saveCladding(self):
+        try:
+            if self.claddingNameEntry.get() == "":
+                raise Exception("please enter profile name")
+            if self.PPDiameterEntry.get() == "":
+                raise Exception("please enter pp diameter")
+            if self.PPFilmThicknessEntry.get() == "":
+                raise Exception("please enter pp film thickness")
+            self.profilesCur.execute(
+                "INSERT INTO claddingDie (profile, ppd, pp_thickness) VALUES (?, ?, ?)",
+                (
+                    self.claddingNameEntry.get(),
+                    self.PPDiameterEntry.get(),
+                    self.PPFilmThicknessEntry.get(),
+                ),
+            )
+            self.profilesConn.commit()
+            items = self.profilesCur.execute(
+                "SELECT profile FROM claddingDie"
+            ).fetchall()
+            items = [item[0] for item in items]
+            self.claddingDieProfile.configure(values=list(items) + ["New profile"])
+            self.claddingDieProfile.set(self.claddingNameEntry.get())
+            self.claddingNameEntry.delete(0, ctk.END)
+            self.claddingNameLabel.grid_forget()
+            self.claddingNameEntry.grid_forget()
+            self.saveCladdingB.grid_forget()
+            self.claddingCommand(self.claddingNameEntry.get())
+        except Exception as e:
+            print("error: " + str(e))
+
     def modeCommand(self, mode):
         if mode == "PR":
             self.PR()
         else:  # hide widgets related to PR
+            self.materialprofile.grid_forget()
             self.densityLabel.grid_forget()
             self.densityEntry.grid_forget()
+            self.densityUnitLabel.grid_forget()
             self.elasticLabel.grid_forget()
             self.elasticEntry.grid_forget()
+            self.elasticUnitLabel.grid_forget()
             self.shrinkageLabel.grid_forget()
             self.shrinkageEntry.grid_forget()
+            self.shrinkageUnitLabel.grid_forget()
 
+            self.flatDieProfile.grid_forget()
+            self.claddingDieProfile.grid_forget()
             self.pipeLengthLabel.grid_forget()
+            self.pipeLengthUnitLabel.grid_forget()
             self.pipeLengthEnry.grid_forget()
             self.pipeDiameterLabel.grid_forget()
+            self.pipeDiameterUnitLabel.grid_forget()
             self.pipeDiameterEnry.grid_forget()
             self.pitchLabel.grid_forget()
             self.pitchEntry.grid_forget()
+            self.pitchUnitLabel.grid_forget()
+            self.pitchFactorLabel.grid_forget()
+            self.pitchFactorEntry.grid_forget()
+            self.pitchFactorUnitLabel.grid_forget()
             self.WallThicknessLabel.grid_forget()
             self.WallThicknessEntry.grid_forget()
+            self.WallThicknessUnitLabel.grid_forget()
+            self.finalPitchLabel.grid_forget()
+            self.finalPitchEntry.grid_forget()
+            self.finalPitchUnitLabel.grid_forget()
             self.PPDiameterLabel.grid_forget()
             self.PPDiameterEntry.grid_forget()
+            self.PPDiameterUnitLabel.grid_forget()
             self.PPFilmThicknessLabel.grid_forget()
             self.PPFilmThicknessEntry.grid_forget()
+            self.PPFilmThicknessUnitLabel.grid_forget()
 
-            self.MouthEndLabel.grid_forget()
-            self.MouthEndEntry.grid_forget()
-            self.CarriageReturnPositionLabel.grid_forget()
-            self.CarriageReturnPositionEntry.grid_forget()
-            self.CarriageReturnDelayLabel.grid_forget()
-            self.CarriageReturnDelayEntry.grid_forget()
-            self.PPStartLabel.grid_forget()
-            self.PPStartEntry.grid_forget()
-            self.PPEndLabel.grid_forget()
-            self.PPEndEntry.grid_forget()
             self.SocketStartLabel.grid_forget()
             self.SocketStartEntry.grid_forget()
+            self.SocketStartUnitLabel.grid_forget()
             self.SocketEndLabel.grid_forget()
             self.SocketEndEntry.grid_forget()
-            self.MoldSpeedLabel.grid_forget()
-            self.MoldSpeedEntry.grid_forget()
+            self.SocketEndUnitLabel.grid_forget()
+            self.MouthStartLabel.grid_forget()
+            self.MouthStartEntry.grid_forget()
+            self.MouthStartUnitLabel.grid_forget()
+            self.MouthEndLabel.grid_forget()
+            self.MouthEndEntry.grid_forget()
+            self.MouthEndUnitLabel.grid_forget()
+            self.CarriageReturnPositionLabel.grid_forget()
+            self.CarriageReturnPositionEntry.grid_forget()
+            self.CarriageReturnPositionUnitLabel.grid_forget()
+            self.CarriageReturnDelayLabel.grid_forget()
+            self.CarriageReturnDelayEntry.grid_forget()
+            self.CarriageReturnDelayUnitLabel.grid_forget()
+            self.PPStartLabel.grid_forget()
+            self.PPStartEntry.grid_forget()
+            self.PPStartUnitLabel.grid_forget()
+            self.PPEndLabel.grid_forget()
+            self.PPEndEntry.grid_forget()
+            self.PPEndUnitLabel.grid_forget()
             self.FlatExtruder75Label.grid_forget()
             self.FlatExtruder75Entry.grid_forget()
+            self.FlatExtruder75UnitLabel.grid_forget()
             self.CladdingExtruder75Label.grid_forget()
             self.CladdingExtruder75Entry.grid_forget()
-
-            self.SnLabel.grid_forget()
-            self.W1Label.grid_forget()
-            self.W2Label.grid_forget()
-            self.W3Label.grid_forget()
-            self.W4Label.grid_forget()
-            self.WLabel.grid_forget()
-            self.WkLabel.grid_forget()
-            self.WpLabel.grid_forget()
-            self.WzLabel.grid_forget()
-            self.W0Label.grid_forget()
+            self.CladdingExtruder75UnitLabel.grid_forget()
+            self.MoldSpeedLabel.grid_forget()
+            self.MoldSpeedEntry.grid_forget()
+            self.MoldSpeedUnitLabel.grid_forget()
 
         #
 
@@ -937,8 +1214,9 @@ class main(ctk.CTk):
         #
 
     def PR(self):  # show widgets related to PR
-        self.materialprofile.grid(row=0, column=2, columnspan=2, sticky="w")
-        self.dieProfile.grid(row=0, column=2, columnspan=2, sticky="w")
+        self.materialprofile.grid(row=0, column=15, columnspan=2, sticky="w", padx=5)
+        self.flatDieProfile.grid(row=0, column=15, columnspan=2, sticky="w", padx=5)
+        self.claddingDieProfile.grid(row=1, column=15, columnspan=2, sticky="w", padx=5)
 
         self.densityLabel.grid(row=1, column=0, padx=5, pady=5)
         self.densityEntry.grid(row=1, column=1, padx=5, pady=5)
@@ -1037,7 +1315,14 @@ class main(ctk.CTk):
 
         #
 
-    def calculate(self):
+    def VW(self):
+        
+        pass
+
+    def calculateVW(self):
+        pass
+    
+    def calculatePR(self):
         self.density = float(self.densityEntry.get())
         self.elastic_modulus = float(self.elasticEntry.get())
         self.shrinkage = float(self.shrinkageEntry.get())
@@ -1045,9 +1330,14 @@ class main(ctk.CTk):
         self.pipe_length = float(self.pipeLengthEnry.get())
         self.pd = float(self.pipeDiameterEnry.get())
         self.p = float(self.pitchEntry.get()) - float(self.pitchFactorEntry.get())
-        self.limitsCur.execute("SELECT c3 FROM diameter WHERE c1=" + str(int(self.pd)))
+        self.limitsCur.execute(
+            "SELECT min_wall_thickness FROM diameter WHERE diameter="
+            + str(int(self.pd))
+        )
         minWallThickness = self.limitsCur.fetchall()
-        self.limitsCur.execute("SELECT c5 FROM moldSize WHERE c1=" + str(int(self.pd)))
+        self.limitsCur.execute(
+            "SELECT body_diameter3 FROM moldSize WHERE mold_size=" + str(int(self.pd))
+        )
         newPd = self.limitsCur.fetchall()
         try:
             newPd = newPd[0]
@@ -1125,7 +1415,9 @@ class main(ctk.CTk):
         W3 = V3 * self.density / 1000000.0
         W4 = V4 * self.density / 1000000.0
         W = W1 + W2 + W3 + W4
-        self.limitsCur.execute("SELECT c2 FROM ppwt WHERE c1=" + str(int(self.ppd)))
+        self.limitsCur.execute(
+            "SELECT weight FROM ppwt WHERE pp_weight=" + str(int(self.ppd))
+        )
         tempWk = self.limitsCur.fetchall()
         try:
             tempWk = tempWk[0]
@@ -1138,74 +1430,75 @@ class main(ctk.CTk):
         Wz = W1 + W2 + W3 + W4 + Wp
         W0 = Wz - W2 / 2.0
         pp_dist = self.p - self.ppd - self.s4 * 2.0
-        if math.trunc(Sn) in required_Sn:
-            self.SnLabel.configure(text="Stiffness: " + str(round(Sn, 2)) + " kN/m2")
-            self.W1Label.configure(
-                text="Socket pipe body weight: " + str(round(W1, 2)) + " kg"
-            )
-            self.W2Label.configure(
-                text="Socket pipe body weight: "
-                + str(round(W2, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
-            self.W3Label.configure(
-                text="Flat film tube weight: "
-                + str(round(W3, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
-            self.W4Label.configure(
-                text="Coated film body weight: "
-                + str(round(W4, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
-            self.WLabel.configure(
-                text="Pipe weight excluding pp pipe: "
-                + str(round(W, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
-            self.WkLabel.configure(
-                text="PP pipe weight: " + str(round(Wk, 2)) + " kg/m"
-            )
-            self.WpLabel.configure(
-                text="PP pipe weight: "
-                + str(round(Wp, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
-            self.WzLabel.configure(
-                text="Pipe weight: "
-                + str(round(Wz, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
-            self.W0Label.configure(
-                text="Pipe body weight: "
-                + str(round(W0, 2))
-                + " kg/"
-                + str(self.pipe_length / 1000.0)
-                + "m"
-            )
 
-            self.SnLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-            self.W1Label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-            self.W2Label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-            self.W3Label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
-            self.W4Label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
-            self.WLabel.grid(row=0, column=2, padx=10, pady=5, sticky="w")
-            self.WkLabel.grid(row=1, column=2, padx=10, pady=5, sticky="w")
-            self.WpLabel.grid(row=2, column=2, padx=10, pady=5, sticky="w")
-            self.WzLabel.grid(row=3, column=2, padx=10, pady=5, sticky="w")
-            self.W0Label.grid(row=4, column=2, padx=10, pady=5, sticky="w")
+        self.SnLabel.configure(text="Stiffness: " + str(round(Sn, 2)) + " kN/m2")
+        self.W1Label.configure(
+            text="Socket pipe body weight: " + str(round(W1, 2)) + " kg"
+        )
+        self.W2Label.configure(
+            text="Socket pipe body weight: "
+            + str(round(W2, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+        self.W3Label.configure(
+            text="Flat film tube weight: "
+            + str(round(W3, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+        self.W4Label.configure(
+            text="Coated film body weight: "
+            + str(round(W4, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+        self.WLabel.configure(
+            text="Pipe weight excluding pp pipe: "
+            + str(round(W, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+        self.WkLabel.configure(text="PP pipe weight: " + str(round(Wk, 2)) + " kg/m")
+        self.WpLabel.configure(
+            text="PP pipe weight: "
+            + str(round(Wp, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+        self.WzLabel.configure(
+            text="Pipe weight: "
+            + str(round(Wz, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+        self.W0Label.configure(
+            text="Pipe body weight: "
+            + str(round(W0, 2))
+            + " kg/"
+            + str(self.pipe_length / 1000.0)
+            + "m"
+        )
+
+        self.SnLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.W1Label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+        self.W2Label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        self.W3Label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        self.W4Label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
+        self.WLabel.grid(row=0, column=2, padx=10, pady=5, sticky="w")
+        self.WkLabel.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+        self.WpLabel.grid(row=2, column=2, padx=10, pady=5, sticky="w")
+        self.WzLabel.grid(row=3, column=2, padx=10, pady=5, sticky="w")
+        self.W0Label.grid(row=4, column=2, padx=10, pady=5, sticky="w")
+
+    def setResize(self, flag):
+        self.resizable(flag, flag)
 
 
 main = main()
