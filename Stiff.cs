@@ -22,7 +22,7 @@
 
     private void StiffnessCalc1pr()
     {
-      this.resultBean.Y1 = this.paramBean.Pmhd1 / 2.0;
+      this.resultBean.Y1 = this.paramBean.Pmhd1 / 2.0; 
       this.resultBean.Y2 = this.paramBean.Pmhd1 + this.paramBean.BfmHd1 + this.paramBean.PpZjP / 2.0;
       this.resultBean.A1 = this.paramBean.Pmhd1 * this.paramBean.Pmkd1;
       this.resultBean.A2 = Math.Pow(this.paramBean.PpZjP / 2.0 + this.paramBean.BfmHd1, 2.0) * Math.PI - Math.Pow(this.paramBean.PpZjP / 2.0, 2.0) * Math.PI;
