@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("profiles.db")
+conn = sqlite3.connect("limits.db")
 cur = conn.cursor()
 
 # cur.execute(
@@ -25,11 +25,11 @@ cur = conn.cursor()
 #             """
 # )
 
-cur.execute(
-    """
-            DELETE FROM claddingDie WHERE id >= 0
-            """
-)
+# cur.execute(
+#     """
+#             DELETE FROM claddingDie WHERE id >= 0
+#             """
+# )
 
 # flat_die = {
 #     27: [3],
@@ -42,14 +42,16 @@ cur.execute(
 #     110: [6, 7, 8, 10],
 # }
 
+flat_die = {800: [150], 900: [150], 1000: [150], 1200: [160], 1400: [160], 2000: [170]}
 
-# for pitch, other in flat_die.items():
-#     for wall_thickness in other:
-#         cur.execute(
-#             """
-#                     INSERT INTO claddingDie (profile, ppd, pp_thickness) VALUES (?, ?, ?)
-#                     """,
-#             (str(pitch) + "-S" + str(wall_thickness), pitch, wall_thickness),
-#         )
+
+for pitch, other in flat_die.items():
+    for wall_thickness in other:
+        cur.execute(
+            """
+                    INSERT INTO moldDiameter ( mold_diameter, mold_optimal_temperature) VALUES (?, ?)
+                    """,
+            (pitch, wall_thickness),
+        )
 
 conn.commit()

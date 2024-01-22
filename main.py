@@ -717,6 +717,7 @@ class main(ctk.CTk):
         self.maxFactorEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.maxFactorEntry.delete(0,ctk.END)
         self.maxFactorEntry.insert(0, "80")
 
         self.flat75MaxLabel = ctk.CTkLabel(
@@ -730,6 +731,7 @@ class main(ctk.CTk):
         self.falt75MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.falt75MaxEntry.delete(0,ctk.END)
         self.falt75MaxEntry.insert(0, "420")
 
         self.flat45MaxLabel = ctk.CTkLabel(
@@ -743,6 +745,7 @@ class main(ctk.CTk):
         self.flat45MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.flat45MaxEntry.delete(0,ctk.END)
         self.flat45MaxEntry.insert(0, "90")
 
         self.cladding75MaxLabel = ctk.CTkLabel(
@@ -756,6 +759,7 @@ class main(ctk.CTk):
         self.cladding75MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.cladding75MaxEntry.delete(0,ctk.END)
         self.cladding75MaxEntry.insert(0, "420")
         self.cladding45MaxLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"),
@@ -768,6 +772,7 @@ class main(ctk.CTk):
         self.cladding45MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.cladding45MaxEntry.delete(0,ctk.END)
         self.cladding45MaxEntry.insert(0, "90")
         self.MoldSpeedLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Machine"), fg_color="transparent", text="Mold Speed"
@@ -780,6 +785,7 @@ class main(ctk.CTk):
         self.MoldSpeedEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Machine"), placeholder_text="", width=70
         )
+        self.MoldSpeedEntry.delete(0,ctk.END)
         self.MoldSpeedEntry.insert(0, "3850")
         self.MoldSpeedEntry.bind("<FocusOut>", command=self.calcSpeeds)
         self.ppSpeedFractionLabel = ctk.CTkLabel(
@@ -794,6 +800,7 @@ class main(ctk.CTk):
         self.ppSpeedFractionEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Machine"), placeholder_text="", width=70
         )
+        self.ppSpeedFractionEntry.delete(0,ctk.END)
         self.ppSpeedFractionEntry.insert(0, "95")
         self.ppSpeedFractionEntry.bind("<FocusOut>", command=self.calcSpeeds)
         self.ppSpeedLabel = ctk.CTkLabel(
@@ -839,6 +846,7 @@ class main(ctk.CTk):
         self.FlatExtruder75Entry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.FlatExtruder75Entry.delete(0,ctk.END)
         self.FlatExtruder75Entry.insert(0, "83")
         self.FlatExtruder75Entry.bind("<FocusOut>", command=self.f45)
 
@@ -873,6 +881,7 @@ class main(ctk.CTk):
         self.CladdingExtruder75Entry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
+        self.CladdingExtruder75Entry.delete(0,ctk.END)
         self.CladdingExtruder75Entry.insert(0, "83")
         self.CladdingExtruder75Entry.bind("<FocusOut>", command=self.c45)
 
@@ -915,6 +924,14 @@ class main(ctk.CTk):
             text="Carriage Return \nPosition (mm)",
         )
         self.CarriageReturnPositionEntry = ctk.CTkEntry(
+            self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
+        )
+        self.CarriageRotationsLabel = ctk.CTkLabel(
+            self.MachineTabs.tab("Trolley Position"),
+            fg_color="transparent",
+            text="Carriage Rotations",
+        )
+        self.CarriageRotationsEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
         )
         self.CarriageReturnDelayLabel = ctk.CTkLabel(
@@ -981,6 +998,14 @@ class main(ctk.CTk):
             state="disabled",
             fg_color=("#bababa", "#262626"),
         )
+        self.trolleyRotataionsLabel = ctk.CTkLabel(
+            self.MachineTabs.tab("Trolley Position"),
+            fg_color="transparent",
+            text="Trolley Rotations",
+        )
+        self.trolleyRotataionsEntry = ctk.CTkEntry(
+            self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
+        )
         self.trolleyIncreaseTimeLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Trolley Position"),
             fg_color="transparent",
@@ -1024,7 +1049,6 @@ class main(ctk.CTk):
             command=self.moreF,
         )
         self.resultsFrame.grid_columnconfigure(4, weight=4)
-        # self.moreFrame.grid(row=0, column=4, sticky="nse", rowspan=40)
 
         self.SnLabel = ctk.CTkLabel(
             self.moreFrame, fg_color="transparent", text="Sn:      ", anchor="w"
@@ -1538,40 +1562,6 @@ class main(ctk.CTk):
         self.CladdingExtruder45UnitLabel.grid_forget()
         self.CladdingExtruder45Entry.grid_forget()
 
-        # self.SocketStartLabel.grid_forget()
-        # self.SocketStartEntry.grid_forget()
-        # self.SocketStartUnitLabel.grid_forget()
-        # self.SocketEndLabel.grid_forget()
-        # self.SocketEndEntry.grid_forget()
-        # self.SocketEndUnitLabel.grid_forget()
-        # self.MouthStartLabel.grid_forget()
-        # self.MouthStartEntry.grid_forget()
-        # self.MouthStartUnitLabel.grid_forget()
-        # self.MouthEndLabel.grid_forget()
-        # self.MouthEndEntry.grid_forget()
-        # self.MouthEndUnitLabel.grid_forget()
-        # self.CarriageReturnPositionLabel.grid_forget()
-        # self.CarriageReturnPositionEntry.grid_forget()
-        # self.CarriageReturnPositionUnitLabel.grid_forget()
-        # self.CarriageReturnDelayLabel.grid_forget()
-        # self.CarriageReturnDelayEntry.grid_forget()
-        # self.CarriageReturnDelayUnitLabel.grid_forget()
-        # self.PPStartLabel.grid_forget()
-        # self.PPStartEntry.grid_forget()
-        # self.PPStartUnitLabel.grid_forget()
-        # self.PPEndLabel.grid_forget()
-        # self.PPEndEntry.grid_forget()
-        # self.PPEndUnitLabel.grid_forget()
-        # self.FlatExtruder75Label.grid_forget()
-        # self.FlatExtruder75Entry.grid_forget()
-        # self.FlatExtruder75UnitLabel.grid_forget()
-        # self.CladdingExtruder75Label.grid_forget()
-        # self.CladdingExtruder75Entry.grid_forget()
-        # self.CladdingExtruder75UnitLabel.grid_forget()
-        # self.MoldSpeedLabel.grid_forget()
-        # self.MoldSpeedEntry.grid_forget()
-        # self.MoldSpeedUnitLabel.grid_forget()
-
         if mode == "PR":
             self.PR()
         elif mode == "VW":
@@ -1685,16 +1675,24 @@ class main(ctk.CTk):
             if self.isreal(temP) == False:
                 raise Exception("Mold speed must be a number")
             temp = (self.pd / float(temP)) * 60 * math.pi
+            if self.isreal(self.CarriageRotationsEntry.get()) == False:
+                raise Exception("Carriage rotations must be a number")
+            if self.isreal(self.trolleyRotataionsEntry.get()) == False:
+                raise Exception("Trolley rotations must be a number")
             self.CarriageReturnDelayEntry.configure(state="normal")
             self.CarriageReturnDelayEntry.delete(0, ctk.END)
-            self.CarriageReturnDelayEntry.insert(0, str(round(temp, 2)))
+            self.CarriageReturnDelayEntry.insert(
+                0, str(round(temp * float(self.CarriageRotationsEntry.get()), 2))
+            )
             self.CarriageReturnDelayEntry.configure(
                 state="disabled",
                 fg_color=("#bababa", "#262626"),
             )
             self.trolleyIncreaseTimeEntry.configure(state="normal")
             self.trolleyIncreaseTimeEntry.delete(0, ctk.END)
-            self.trolleyIncreaseTimeEntry.insert(0, self.CarriageReturnDelayEntry.get())
+            self.trolleyIncreaseTimeEntry.insert(
+                0, str(round(temp * float(self.trolleyRotataionsEntry.get()), 2))
+            )
             self.trolleyIncreaseTimeEntry.configure(
                 state="disabled",
                 fg_color=("#bababa", "#262626"),
@@ -1708,9 +1706,11 @@ class main(ctk.CTk):
             self.trolleyError = ctk.CTkLabel(
                 self.MachineTabs.tab("Trolley Position"),
                 text_color="red",
-                text="Mold speed must be a number: " + str(e),
+                text=str(e),
             )
-            self.trolleyError.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+            self.trolleyError.grid(
+                row=3, column=0, padx=10, pady=5, columnspan=10, sticky="w"
+            )
 
         self.machineLimitsError.configure(text="")
         self.ppSpeedEntry.configure(state="normal")
@@ -1747,7 +1747,7 @@ class main(ctk.CTk):
             * self.W4
         )
         try:
-            #check if inputs are numbers
+            # check if inputs are numbers
             if self.isreal(self.maxFactorEntry.get()) == False:
                 self.maxFactorEntry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
@@ -1813,7 +1813,7 @@ class main(ctk.CTk):
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
                 raise Exception("Cladding extruder 45 must be a number")
-            
+
             if flatExtruder * float(self.FlatExtruder75Entry.get()) > float(
                 self.falt75MaxEntry.get()
             ) * float(self.maxFactorEntry.get()):
@@ -1985,9 +1985,6 @@ class main(ctk.CTk):
         elif self.modes.get() == "VW":
             self.calculateVW()
 
-        self.f45(None)
-        self.c45(None)
-        self.calcSpeeds(None)
         self.maxFactorLabel.grid(row=0, column=1, padx=10, pady=5, sticky="w")
         self.maxFactorUnitLabel.grid(row=0, column=3, padx=10, pady=5)
         self.maxFactorEntry.grid(row=0, column=2, padx=10, pady=5, sticky="w")
@@ -2030,67 +2027,178 @@ class main(ctk.CTk):
         self.ppSpeedFractionEntry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
         self.MouthStartLabel.grid(
-            row=2,
+            row=0,
             column=0,
             padx=10,
             pady=5,
         )
-        self.MouthEndLabel.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        self.MouthEndLabel.grid(
+            row=0,
+            column=2,
+            padx=10,
+            pady=5,
+        )
         self.CarriageReturnPositionLabel.grid(
-            row=2,
-            column=2,
-            padx=10,
-            pady=5,
-        )
-        self.CarriageReturnDelayLabel.grid(row=2, column=3, padx=10, pady=5, sticky="e")
-        self.PPStartLabel.grid(row=2, column=4, padx=10, pady=5, sticky="w")
-        self.PPEndLabel.grid(row=2, column=5, padx=10, pady=5, sticky="w")
-        self.SocketStartLabel.grid(row=2, column=6, padx=10, pady=5, sticky="w")
-        self.SocketEndLabel.grid(row=2, column=7, padx=10, pady=5, sticky="w")
-
-        self.MouthStartEntry.grid(
-            row=3,
-            column=0,
-            padx=10,
-            pady=5,
-        )
-        self.MouthEndEntry.grid(
-            row=3,
-            column=1,
-            padx=10,
-            pady=5,
-        )
-        self.CarriageReturnPositionEntry.grid(
-            row=3,
-            column=2,
-            padx=10,
-            pady=5,
-        )
-        self.CarriageReturnDelayEntry.grid(
-            row=3,
-            column=3,
-            padx=10,
-            pady=5,
-        )
-        self.PPStartEntry.grid(
-            row=3,
+            row=0,
             column=4,
             padx=10,
             pady=5,
         )
-        self.PPEndEntry.grid(
-            row=3,
-            column=5,
-            padx=10,
-            pady=5,
-        )
-        self.SocketStartEntry.grid(
-            row=3,
+        self.CarriageRotationsLabel.grid(
+            row=0,
             column=6,
             padx=10,
             pady=5,
         )
-        self.SocketEndEntry.grid(row=3, column=7, padx=10, pady=5)
+        self.CarriageReturnDelayLabel.grid(
+            row=0,
+            column=8,
+            padx=10,
+            pady=5,
+        )
+        self.PPStartLabel.grid(
+            row=1,
+            column=0,
+            padx=10,
+            pady=5,
+        )
+        self.PPEndLabel.grid(
+            row=1,
+            column=2,
+            padx=10,
+            pady=5,
+        )
+        self.SocketStartLabel.grid(
+            row=1,
+            column=4,
+            padx=10,
+            pady=5,
+        )
+        self.SocketEndLabel.grid(
+            row=1,
+            column=6,
+            padx=10,
+            pady=5,
+        )
+        self.trolleyRotataionsLabel.grid(
+            row=2,
+            column=0,
+            padx=10,
+            pady=5,
+        )
+        self.trolleyIncreaseTimeLabel.grid(
+            row=2,
+            column=2,
+            padx=10,
+            pady=5,
+        )
+        self.ppExtruderStartLabel.grid(
+            row=2,
+            column=4,
+            padx=10,
+            pady=5,
+        )
+        self.ppEndDelayLabel.grid(
+            row=2,
+            column=6,
+            padx=10,
+            pady=5,
+        )
+
+        self.MouthStartEntry.grid(
+            row=0,
+            column=1,
+            padx=10,
+            pady=5,
+        )
+        self.MouthStartEntry.delete(0, ctk.END)
+        self.MouthStartEntry.insert(0, "115")
+        self.MouthEndEntry.grid(row=0, column=3, padx=10, pady=5)
+        self.MouthEndEntry.delete(0, ctk.END)
+        self.MouthEndEntry.insert(0, "680")
+        self.CarriageReturnPositionEntry.delete(0, ctk.END)
+        self.CarriageReturnPositionEntry.insert(0, "350")
+        self.CarriageReturnPositionEntry.grid(
+            row=0,
+            column=5,
+            padx=10,
+            pady=5,
+        )
+        self.CarriageRotationsEntry.delete(0, ctk.END)
+        self.CarriageRotationsEntry.insert(0, "1")
+        self.CarriageRotationsEntry.grid(
+            row=0,
+            column=7,
+            padx=10,
+            pady=5,
+        )
+        self.CarriageRotationsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.CarriageReturnDelayEntry.grid(
+            row=0,
+            column=9,
+            padx=10,
+            pady=5,
+        )
+        self.PPStartEntry.grid(
+            row=1,
+            column=1,
+            padx=10,
+            pady=5,
+        )
+        self.PPStartEntry.bind("<FocusOut>", self.calcPPExSt)
+        self.PPStartEntry.delete(0, ctk.END)
+        self.PPStartEntry.insert(0, "680")
+        self.PPEndEntry.grid(
+            row=1,
+            column=3,
+            padx=10,
+            pady=5,
+        )
+        self.PPEndEntry.delete(0, ctk.END)
+        self.PPEndEntry.insert(0, "6114")
+        self.SocketStartEntry.grid(
+            row=1,
+            column=5,
+            padx=10,
+            pady=5,
+        )
+        self.SocketStartEntry.delete(0, ctk.END)
+        self.SocketStartEntry.insert(0, "6000")
+        self.SocketEndEntry.grid(row=1, column=7, padx=10, pady=5)
+        self.SocketEndEntry.delete(0, ctk.END)
+        self.SocketEndEntry.insert(0, "6115")
+        self.trolleyRotataionsEntry.grid(
+            row=2,
+            column=1,
+            padx=10,
+            pady=5,
+        )
+        self.trolleyRotataionsEntry.delete(0, ctk.END)
+        self.trolleyRotataionsEntry.insert(0, "1")
+        self.trolleyRotataionsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.trolleyIncreaseTimeEntry.grid(
+            row=2,
+            column=3,
+            padx=10,
+            pady=5,
+        )
+        self.trolleyIncreaseTimeEntry.bind("<FocusOut>", self.calcTrolley)
+        self.ppExtruderStartEntry.grid(
+            row=2,
+            column=5,
+            padx=10,
+            pady=5,
+        )
+        self.ppEndDelayEntry.grid(
+            row=2,
+            column=7,
+            padx=10,
+            pady=5,
+        )
+        self.f45(None)
+        self.c45(None)
+        self.calcSpeeds(None)
+        self.calcPPExSt(None)
 
     def calcPPExSt(self, event=None):
         try:
@@ -2504,10 +2612,6 @@ class main(ctk.CTk):
         self.claddingCommand(best[1])
         self.calculatePR()
 
-        self.f45(None)
-        self.c45(None)
-        self.calcSpeeds(None)
-
         self.maxFactorLabel.grid(row=0, column=1, padx=10, pady=5, sticky="w")
         self.maxFactorUnitLabel.grid(row=0, column=3, padx=10, pady=5)
         self.maxFactorEntry.grid(row=0, column=2, padx=10, pady=5, sticky="w")
@@ -2567,9 +2671,15 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.CarriageReturnDelayLabel.grid(
+        self.CarriageRotationsLabel.grid(
             row=0,
             column=6,
+            padx=10,
+            pady=5,
+        )
+        self.CarriageReturnDelayLabel.grid(
+            row=0,
+            column=8,
             padx=10,
             pady=5,
         )
@@ -2597,21 +2707,27 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.trolleyIncreaseTimeLabel.grid(
+        self.trolleyRotataionsLabel.grid(
             row=2,
             column=0,
             padx=10,
             pady=5,
         )
-        self.ppExtruderStartLabel.grid(
+        self.trolleyIncreaseTimeLabel.grid(
             row=2,
             column=2,
             padx=10,
             pady=5,
         )
-        self.ppEndDelayLabel.grid(
+        self.ppExtruderStartLabel.grid(
             row=2,
             column=4,
+            padx=10,
+            pady=5,
+        )
+        self.ppEndDelayLabel.grid(
+            row=2,
+            column=6,
             padx=10,
             pady=5,
         )
@@ -2622,19 +2738,31 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
+        self.MouthStartEntry.delete(0, ctk.END)
         self.MouthStartEntry.insert(0, "115")
         self.MouthEndEntry.grid(row=0, column=3, padx=10, pady=5)
+        self.MouthEndEntry.delete(0, ctk.END)
         self.MouthEndEntry.insert(0, "680")
+        self.CarriageReturnPositionEntry.delete(0, ctk.END)
+        self.CarriageReturnPositionEntry.insert(0, "350")
         self.CarriageReturnPositionEntry.grid(
             row=0,
             column=5,
             padx=10,
             pady=5,
         )
-        self.CarriageReturnPositionEntry.insert(0, "350")
-        self.CarriageReturnDelayEntry.grid(
+        self.CarriageRotationsEntry.delete(0, ctk.END)
+        self.CarriageRotationsEntry.insert(0, "1")
+        self.CarriageRotationsEntry.grid(
             row=0,
             column=7,
+            padx=10,
+            pady=5,
+        )
+        self.CarriageRotationsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.CarriageReturnDelayEntry.grid(
+            row=0,
+            column=9,
             padx=10,
             pady=5,
         )
@@ -2645,14 +2773,15 @@ class main(ctk.CTk):
             pady=5,
         )
         self.PPStartEntry.bind("<FocusOut>", self.calcPPExSt)
+        self.PPStartEntry.delete(0, ctk.END)
         self.PPStartEntry.insert(0, "680")
-        self.calcPPExSt(None)
         self.PPEndEntry.grid(
             row=1,
             column=3,
             padx=10,
             pady=5,
         )
+        self.PPEndEntry.delete(0, ctk.END)
         self.PPEndEntry.insert(0, "6114")
         self.SocketStartEntry.grid(
             row=1,
@@ -2660,28 +2789,43 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
+        self.SocketStartEntry.delete(0, ctk.END)
         self.SocketStartEntry.insert(0, "6000")
         self.SocketEndEntry.grid(row=1, column=7, padx=10, pady=5)
+        self.SocketEndEntry.delete(0, ctk.END)
         self.SocketEndEntry.insert(0, "6115")
-        self.trolleyIncreaseTimeEntry.grid(
+        self.trolleyRotataionsEntry.grid(
             row=2,
             column=1,
+            padx=10,
+            pady=5,
+        )
+        self.trolleyRotataionsEntry.delete(0, ctk.END)
+        self.trolleyRotataionsEntry.insert(0, "1")
+        self.trolleyRotataionsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.trolleyIncreaseTimeEntry.grid(
+            row=2,
+            column=3,
             padx=10,
             pady=5,
         )
         self.trolleyIncreaseTimeEntry.bind("<FocusOut>", self.calcTrolley)
         self.ppExtruderStartEntry.grid(
             row=2,
-            column=3,
+            column=5,
             padx=10,
             pady=5,
         )
         self.ppEndDelayEntry.grid(
             row=2,
-            column=5,
+            column=7,
             padx=10,
             pady=5,
         )
+        self.f45(None)
+        self.c45(None)
+        self.calcSpeeds(None)
+        self.calcPPExSt(None)
 
     def calcTrolley(self, event):
         temp = (self.p * float(self.trolleyIncreaseTimeEntry.get())) / 250
