@@ -1,0 +1,55 @@
+self.profilesCur.execute("SELECT * FROM "+ file_name)
+
+self.Frame = ctk.CTkScrollableFrame(
+            self,
+            orientation="both",
+            scrollbar_button_color="grey30",
+            bg_color="transparent",
+            fg_color="transparent",
+        )
+        self.Frame.grid_columnconfigure(0, weight=1)
+        self.Frame.grid_columnconfigure(1, weight=1)
+
+        self.Headers = [
+            description[0] for description in self.profilesCur.description[1::]
+        ]
+        self.RowsData = self.profilesCur.fetchall()
+        self.NumRows = len(self.RowsData)
+        self.Entries = []
+
+        if len(self.Headers) > 0:
+            create = ctk.CTkButton(
+                self.Frame,
+                text="Add",
+                command=lambda: self.edit(None, True),
+                width=15,
+                # fg_color="transparent",
+            )
+            create.grid(row=0, column=0, padx=10, pady=5, sticky="n")
+            for col, header in enumerate(self.Headers):
+                self.label = ctk.CTkLabel(self.Frame, text=header)
+                self.label.grid(row=0, column=col + 1, padx=10, pady=5)
+
+        if len(self.RowsData) > 0:
+            for row, row_data in enumerate(self.RowsData, start=1):
+                edit = ctk.CTkButton(
+                    self.Frame,
+                    text="",
+                    command=lambda row=row: self.edit(row, False),
+                    width=15,
+                    height=15,
+                    image=ctk.CTkImage(
+                        light_image=Image.open("edit.png"),
+                        size=(15, 15),
+                        dark_image=Image.open("edit.png"),
+                    ),
+                    bg_color="transparent",
+                    fg_color="transparent",
+                )
+                edit.grid(row=row, column=0, padx=10, pady=5)
+                for col, value in enumerate(row_data[1::]):
+                    entry = ctk.CTkEntry(self.Frame, width=100, state="normal")
+                    entry.insert(ctk.END, value)
+                    entry.configure(state="disabled")
+                    entry.grid(row=row, column=col + 1, padx=10, pady=5)
+                    self.Entries.append(entry)

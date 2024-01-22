@@ -39,6 +39,7 @@ for pd in pipe_mold:
             for ppd, pp_thickness in cladding_die.items():  # ppd: ppzjp
                 for s4 in pp_thickness:  # bfmhd1
                     # Equations for Pipe Stiffness
+                    pp_thickness = pp_thickness * 0.97
                     Y1 = s1 / 2.0
                     Y2 = s1 + s4 + 0.9 * ppd / 2.0
                     A1 = s1 * p
