@@ -4,7 +4,7 @@ from PIL import Image
 
 
 class Edit(ctk.CTkToplevel):
-    def __init__(self, file=str, table=str, create=False, row=-1, parent=any):
+    def __init__(self, file=str, table=str, create=False, row=-1, id=-1, parent=any):
         super().__init__()
         self.file = str(file)
         self.table = str(table)
@@ -15,6 +15,7 @@ class Edit(ctk.CTkToplevel):
         self.NumRows = int
         self.row = row
         self.parent = parent
+        self.id = id
 
         self.geometry(
             "600x400+"
@@ -48,6 +49,16 @@ class Edit(ctk.CTkToplevel):
         self.grid_rowconfigure(0, weight=1)
         self.Frame.grid(row=0, column=0, columnspan=3, sticky="nsew", pady=10, padx=10)
 
+        self.bind("<Quit>", self.__del__)
+        self.bind("<Return>", self.save)
+
+    def __del__(self, event=None):
+        print("deleting")
+        self.parent.Frame.grid_forget()
+        self.parent.refresh(self.table, self.file, None)
+        self.parent.Frame.grid(row=0, column=1, sticky="nsew")
+        self.destroy()
+
     def save(self):
         data = []
         for entry in self.Entries:
@@ -78,7 +89,7 @@ class Edit(ctk.CTkToplevel):
                 + """ = """
                 + str(data)
                 + """ WHERE id = """
-                + str(self.row)
+                + str(self.id)
                 + """;"""
             )
 
@@ -125,11 +136,32 @@ class Edit(ctk.CTkToplevel):
         #         self.label = ctk.CTkLabel(self.Frame, text=header)
         #         self.label.grid(row=0, column=col, padx=10, pady=5)
 
+        print(self.Headers)
+        print(self.create)
+        if self.create and len(self.RowsData) <= 0:
+            print(self.Headers)
+            for col, header in enumerate(self.Headers):
+                self.label = ctk.CTkLabel(self.Frame, text=header)
+                self.label.grid(
+                    row=int(col / 2),
+                    column=(col % 2) * 2,
+                    padx=10,
+                    pady=5,
+                )
+                entry = ctk.CTkEntry(self.Frame, width=100, state="normal")
+                entry.grid(
+                    row=int(col / 2),
+                    column=(col % 2) * 2 + 1,
+                    padx=10,
+                    pady=5,
+                )
+                self.Entries.append(entry)
+                flag = True
         if len(self.RowsData) > 0:
             for row, row_data in enumerate(self.RowsData, start=1):
                 if not flag:
                     for col, value in enumerate(row_data[1::]):
-                        if self.create:
+                        if self.create and len(self.RowsData) > 0:
                             self.label = ctk.CTkLabel(
                                 self.Frame, text=self.Headers[col] + ": "
                             )
@@ -145,6 +177,7 @@ class Edit(ctk.CTkToplevel):
                             )
                             self.Entries.append(entry)
                             flag = True
+
                         elif row == self.row:
                             self.label = ctk.CTkLabel(
                                 self.Frame, text=self.Headers[col] + ": "

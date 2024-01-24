@@ -5,6 +5,8 @@ from PIL import Image
 
 
 class main(ctk.CTk):
+    ctk.set_appearance_mode("light")
+
     def __init__(self):
         super().__init__()
 
@@ -326,19 +328,41 @@ class main(ctk.CTk):
 
         #
 
-        self.modes = ctk.CTkOptionMenu(
+        # self.modes = ctk.CTkOptionMenu(
+        #     self.modeFrame,
+        #     values=self.modeNames,
+        #     command=self.modeCommand,
+        #     corner_radius=0,
+        #     fg_color="#4eb56b",
+        #     button_color="#2b6e3e",
+        #     button_hover_color="#235731",
+        # )
+        self.mode = ""
+
+        self.radio_var = ctk.IntVar(value=0)
+        self.PRBtn = ctk.CTkRadioButton(
             self.modeFrame,
-            values=self.modeNames,
-            command=self.modeCommand,
-            corner_radius=0,
-            fg_color="#4eb56b",
-            button_color="#2b6e3e",
-            button_hover_color="#235731",
+            text="PR",
+            command=lambda: self.modeCommand("PR"),
+            radiobutton_width=20,
+            radiobutton_height=19,
+            variable=self.radio_var,
+            value=1,
         )
-        self.modes.grid(row=0, column=1, sticky="w")
+        self.PRBtn.grid(row=0, column=1, sticky="w", columnspan=1)
+        self.VWBtn = ctk.CTkRadioButton(
+            self.modeFrame,
+            text="VW",
+            command=lambda: self.modeCommand("VW"),
+            radiobutton_width=20,
+            radiobutton_height=19,
+            variable=self.radio_var,
+            value=2,
+        )
+        self.VWBtn.grid(row=0, column=2, sticky="w", columnspan=1)
         self.modesLabel = ctk.CTkLabel(
             self.modeFrame,
-            text="Mode:                    ",
+            text="Mode:       ",
             fg_color="transparent",
             anchor="w",
         )
@@ -586,6 +610,7 @@ class main(ctk.CTk):
         self.pitchEntry.grid_forget()
 
         self.pitchEntry.bind("<FocusOut>", command=self.calcPitch)
+        self.pitchEntry.bind("<Return>", command=self.calcPitch)
 
         self.pitchFactorLabel = ctk.CTkLabel(
             self.productionFrame, fg_color="transparent", text="Flat Die Factor"
@@ -600,6 +625,7 @@ class main(ctk.CTk):
         self.pitchFactorEntry.grid_forget()
 
         self.pitchFactorEntry.bind("<FocusOut>", command=self.calcPitch)
+        self.pitchFactorEntry.bind("<Return>", command=self.calcPitch)
 
         self.finalPitchLabel = ctk.CTkLabel(
             self.productionFrame, fg_color="transparent", text="Pitch"
@@ -717,7 +743,7 @@ class main(ctk.CTk):
         self.maxFactorEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.maxFactorEntry.delete(0,ctk.END)
+        self.maxFactorEntry.delete(0, ctk.END)
         self.maxFactorEntry.insert(0, "80")
 
         self.flat75MaxLabel = ctk.CTkLabel(
@@ -731,7 +757,7 @@ class main(ctk.CTk):
         self.falt75MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.falt75MaxEntry.delete(0,ctk.END)
+        self.falt75MaxEntry.delete(0, ctk.END)
         self.falt75MaxEntry.insert(0, "420")
 
         self.flat45MaxLabel = ctk.CTkLabel(
@@ -745,7 +771,7 @@ class main(ctk.CTk):
         self.flat45MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.flat45MaxEntry.delete(0,ctk.END)
+        self.flat45MaxEntry.delete(0, ctk.END)
         self.flat45MaxEntry.insert(0, "90")
 
         self.cladding75MaxLabel = ctk.CTkLabel(
@@ -759,7 +785,7 @@ class main(ctk.CTk):
         self.cladding75MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.cladding75MaxEntry.delete(0,ctk.END)
+        self.cladding75MaxEntry.delete(0, ctk.END)
         self.cladding75MaxEntry.insert(0, "420")
         self.cladding45MaxLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"),
@@ -772,7 +798,7 @@ class main(ctk.CTk):
         self.cladding45MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.cladding45MaxEntry.delete(0,ctk.END)
+        self.cladding45MaxEntry.delete(0, ctk.END)
         self.cladding45MaxEntry.insert(0, "90")
         self.MoldSpeedLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Machine"), fg_color="transparent", text="Mold Speed"
@@ -785,9 +811,10 @@ class main(ctk.CTk):
         self.MoldSpeedEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Machine"), placeholder_text="", width=70
         )
-        self.MoldSpeedEntry.delete(0,ctk.END)
+        self.MoldSpeedEntry.delete(0, ctk.END)
         self.MoldSpeedEntry.insert(0, "3850")
         self.MoldSpeedEntry.bind("<FocusOut>", command=self.calcSpeeds)
+        self.MoldSpeedEntry.bind("<Return>", command=self.calcSpeeds)
         self.ppSpeedFractionLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Machine"),
             fg_color="transparent",
@@ -800,9 +827,10 @@ class main(ctk.CTk):
         self.ppSpeedFractionEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Machine"), placeholder_text="", width=70
         )
-        self.ppSpeedFractionEntry.delete(0,ctk.END)
+        self.ppSpeedFractionEntry.delete(0, ctk.END)
         self.ppSpeedFractionEntry.insert(0, "95")
         self.ppSpeedFractionEntry.bind("<FocusOut>", command=self.calcSpeeds)
+        self.ppSpeedFractionEntry.bind("<Return>", command=self.calcSpeeds)
         self.ppSpeedLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Machine"), fg_color="transparent", text="PP Speed"
         )
@@ -846,9 +874,10 @@ class main(ctk.CTk):
         self.FlatExtruder75Entry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.FlatExtruder75Entry.delete(0,ctk.END)
+        self.FlatExtruder75Entry.delete(0, ctk.END)
         self.FlatExtruder75Entry.insert(0, "83")
         self.FlatExtruder75Entry.bind("<FocusOut>", command=self.f45)
+        self.FlatExtruder75Entry.bind("<Return>", command=self.f45)
 
         self.FlatExtruder45Label = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"),
@@ -881,9 +910,10 @@ class main(ctk.CTk):
         self.CladdingExtruder75Entry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.CladdingExtruder75Entry.delete(0,ctk.END)
+        self.CladdingExtruder75Entry.delete(0, ctk.END)
         self.CladdingExtruder75Entry.insert(0, "83")
         self.CladdingExtruder75Entry.bind("<FocusOut>", command=self.c45)
+        self.CladdingExtruder75Entry.bind("<Return>", command=self.c45)
 
         self.CladdingExtruder45Label = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"),
@@ -984,6 +1014,18 @@ class main(ctk.CTk):
         self.SocketEndEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
         )
+        self.pitchAngleLabel = ctk.CTkLabel(
+            self.MachineTabs.tab("Trolley Position"),
+            fg_color="transparent",
+            text="Pitch Angle \n(°)",
+        )
+        self.pitchAngleEntry = ctk.CTkEntry(
+            self.MachineTabs.tab("Trolley Position"),
+            placeholder_text="",
+            width=70,
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
         self.ppExtruderStartEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Trolley Position"),
             placeholder_text="",
@@ -1001,7 +1043,7 @@ class main(ctk.CTk):
         self.trolleyRotataionsLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Trolley Position"),
             fg_color="transparent",
-            text="Trolley Rotations",
+            text="Mold Rotations",
         )
         self.trolleyRotataionsEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
@@ -1116,6 +1158,7 @@ class main(ctk.CTk):
         self.reqSnEntries = ctk.CTkEntry(
             self.productionFrame, placeholder_text="", width=70
         )
+        self.reqSnEntries.insert(0, "8")
 
         # buttons
 
@@ -1474,6 +1517,7 @@ class main(ctk.CTk):
             self.moreFrame.grid_forget()
 
     def modeCommand(self, mode):
+        self.mode = mode
         self.materialprofile.grid_forget()
         self.densityLabel.grid_forget()
         self.densityEntry.grid_forget()
@@ -1980,9 +2024,9 @@ class main(ctk.CTk):
             self.productionError.configure(text=str(e))
             return
 
-        if self.modes.get() == "PR":
+        if self.mode == "PR":
             self.calculatePR()
-        elif self.modes.get() == "VW":
+        elif self.mode == "VW":
             self.calculateVW()
 
         self.maxFactorLabel.grid(row=0, column=1, padx=10, pady=5, sticky="w")
@@ -2080,6 +2124,12 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
+        self.pitchAngleLabel.grid(
+            row=1,
+            column=8,
+            padx=10,
+            pady=5,
+        )
         self.trolleyRotataionsLabel.grid(
             row=2,
             column=0,
@@ -2133,6 +2183,7 @@ class main(ctk.CTk):
             pady=5,
         )
         self.CarriageRotationsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.CarriageRotationsEntry.bind("<Return>", self.calcSpeeds)
         self.CarriageReturnDelayEntry.grid(
             row=0,
             column=9,
@@ -2146,6 +2197,7 @@ class main(ctk.CTk):
             pady=5,
         )
         self.PPStartEntry.bind("<FocusOut>", self.calcPPExSt)
+        self.PPStartEntry.bind("<Return>", self.calcPPExSt)
         self.PPStartEntry.delete(0, ctk.END)
         self.PPStartEntry.insert(0, "680")
         self.PPEndEntry.grid(
@@ -2167,6 +2219,14 @@ class main(ctk.CTk):
         self.SocketEndEntry.grid(row=1, column=7, padx=10, pady=5)
         self.SocketEndEntry.delete(0, ctk.END)
         self.SocketEndEntry.insert(0, "6115")
+        temp = math.degrees(
+            math.atan((self.p / 4) / (self.pd / 2 + self.s1 + self.ppd + self.s4 * 2))
+        )
+        self.pitchAngleEntry.configure(state="normal")
+        self.pitchAngleEntry.delete(0, ctk.END)
+        self.pitchAngleEntry.insert(0, str(round(temp, 2)))
+        self.pitchAngleEntry.grid(row=1, column=9, padx=10, pady=5)
+        self.pitchAngleEntry.configure(state="disabled")
         self.trolleyRotataionsEntry.grid(
             row=2,
             column=1,
@@ -2176,6 +2236,7 @@ class main(ctk.CTk):
         self.trolleyRotataionsEntry.delete(0, ctk.END)
         self.trolleyRotataionsEntry.insert(0, "1")
         self.trolleyRotataionsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.trolleyRotataionsEntry.bind("<Return>", self.calcSpeeds)
         self.trolleyIncreaseTimeEntry.grid(
             row=2,
             column=3,
@@ -2183,6 +2244,7 @@ class main(ctk.CTk):
             pady=5,
         )
         self.trolleyIncreaseTimeEntry.bind("<FocusOut>", self.calcTrolley)
+        self.trolleyIncreaseTimeEntry.bind("<Return>", self.calcTrolley)
         self.ppExtruderStartEntry.grid(
             row=2,
             column=5,
@@ -2707,6 +2769,12 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
+        self.pitchAngleLabel.grid(
+            row=1,
+            column=8,
+            padx=10,
+            pady=5,
+        )
         self.trolleyRotataionsLabel.grid(
             row=2,
             column=0,
@@ -2760,6 +2828,7 @@ class main(ctk.CTk):
             pady=5,
         )
         self.CarriageRotationsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.CarriageRotationsEntry.bind("<Return>", self.calcSpeeds)
         self.CarriageReturnDelayEntry.grid(
             row=0,
             column=9,
@@ -2773,6 +2842,7 @@ class main(ctk.CTk):
             pady=5,
         )
         self.PPStartEntry.bind("<FocusOut>", self.calcPPExSt)
+        self.PPStartEntry.bind("<Return>", self.calcPPExSt)
         self.PPStartEntry.delete(0, ctk.END)
         self.PPStartEntry.insert(0, "680")
         self.PPEndEntry.grid(
@@ -2794,6 +2864,14 @@ class main(ctk.CTk):
         self.SocketEndEntry.grid(row=1, column=7, padx=10, pady=5)
         self.SocketEndEntry.delete(0, ctk.END)
         self.SocketEndEntry.insert(0, "6115")
+        temp = math.degrees(
+            math.atan((self.p / 4) / (self.pd / 2 + self.s1 + self.ppd + self.s4 * 2))
+        )
+        self.pitchAngleEntry.configure(state="normal")
+        self.pitchAngleEntry.delete(0, ctk.END)
+        self.pitchAngleEntry.insert(0, str(round(temp, 2)))
+        self.pitchAngleEntry.grid(row=1, column=9, padx=10, pady=5)
+        self.pitchAngleEntry.configure(state="disabled")
         self.trolleyRotataionsEntry.grid(
             row=2,
             column=1,
@@ -2803,6 +2881,7 @@ class main(ctk.CTk):
         self.trolleyRotataionsEntry.delete(0, ctk.END)
         self.trolleyRotataionsEntry.insert(0, "1")
         self.trolleyRotataionsEntry.bind("<FocusOut>", self.calcSpeeds)
+        self.trolleyRotataionsEntry.bind("<Return>", self.calcSpeeds)
         self.trolleyIncreaseTimeEntry.grid(
             row=2,
             column=3,
@@ -2810,6 +2889,7 @@ class main(ctk.CTk):
             pady=5,
         )
         self.trolleyIncreaseTimeEntry.bind("<FocusOut>", self.calcTrolley)
+        self.trolleyIncreaseTimeEntry.bind("<Return>", self.calcTrolley)
         self.ppExtruderStartEntry.grid(
             row=2,
             column=5,
@@ -3059,16 +3139,10 @@ class main(ctk.CTk):
     def setResize(self, flag):
         self.resizable(flag, flag)
 
-    def edit(
-        self,
-        File=str,
-        table=str,
-        create=False,
-        row=-1,
-    ):
+    def edit(self, File=str, table=str, create=False, row=-1, id=-1):
         from edit import Edit
 
-        edit = Edit(File, table, create, row, self)
+        edit = Edit(File, table, create, row, id, self)
         self.refresh(table, File, None)
 
     def delete(self, file, table, row):
@@ -3083,14 +3157,14 @@ class main(ctk.CTk):
         )
         if dialog.get_input() == "DELETE":
             if file == "limits" or file == "limits.db":
-                cur = self.limitsCur
-                conn = self.limitsConn
+                self.limitsCur.execute("DELETE FROM " + table + " WHERE id=" + str(row))
+                self.limitsConn.commit()
             else:
-                cur = self.profilesCur
-                conn = self.profilesConn
-            cur.execute("DELETE FROM " + table + " WHERE id=" + str(row))
+                self.profilesCur.limitsCur.execute(
+                    "DELETE FROM " + table + " WHERE id=" + str(row)
+                )
+                self.profilesConn.limitsConn.commit()
             self.select_frame_by_name(table)
-            conn.commit()
 
     def refresh(self, table, file, event):
         self.Frame.grid_forget()
@@ -3121,7 +3195,7 @@ class main(ctk.CTk):
             create = ctk.CTkButton(
                 self.Frame,
                 text="Add",
-                command=lambda: self.edit(file, table, True, -1),
+                command=lambda: self.edit(file, table, True, -1, -1),
                 width=15,
                 fg_color="#5696b0",
                 # fg_color="transparent",
@@ -3136,7 +3210,9 @@ class main(ctk.CTk):
                 edit = ctk.CTkButton(
                     self.Frame,
                     text="",
-                    command=lambda row=row: self.edit(file, table, False, row),
+                    command=lambda row=row, temp=row_data[0]: self.edit(
+                        file, table, False, row, int(temp)
+                    ),
                     width=15,
                     height=15,
                     image=ctk.CTkImage(
@@ -3146,13 +3222,15 @@ class main(ctk.CTk):
                     ),
                     bg_color="transparent",
                     fg_color="transparent",
-                    hover_color="#00FFFFFF",
+                    hover_color="#c4c4c4",
                 )
                 edit.grid(row=row, column=0, padx=10, pady=5)
                 delete = ctk.CTkButton(
                     self.Frame,
                     text="",
-                    command=lambda row=row: self.delete(file, table, row),
+                    command=lambda temp=row_data[0]: self.delete(
+                        file, table, int(temp)
+                    ),
                     width=15,
                     height=15,
                     image=ctk.CTkImage(
@@ -3162,7 +3240,7 @@ class main(ctk.CTk):
                     ),
                     bg_color="transparent",
                     fg_color="transparent",
-                    hover_color="#00FFFFFF",
+                    hover_color="#c4c4c4",
                 )
                 delete.grid(
                     row=row, column=len(self.Headers) + 1, padx=10, pady=5, sticky="w"
