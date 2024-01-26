@@ -754,11 +754,12 @@ class main(ctk.CTk):
         self.flat75MaxUnitLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
         )
-        self.falt75MaxEntry = ctk.CTkEntry(
+        self.flat75MaxEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"), placeholder_text="", width=70
         )
-        self.falt75MaxEntry.delete(0, ctk.END)
-        self.falt75MaxEntry.insert(0, "420")
+
+        self.flat75MaxEntry.delete(0, ctk.END)
+        self.flat75MaxEntry.insert(0, "420")
 
         self.flat45MaxLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"),
@@ -868,7 +869,7 @@ class main(ctk.CTk):
             text="Flat Extruder 75",
         )
         self.FlatExtruder75UnitLabel = ctk.CTkLabel(
-            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
+            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(%)"
         )
         self.FlatExtruder75Label.grid_forget()
         self.FlatExtruder75Entry = ctk.CTkEntry(
@@ -887,7 +888,7 @@ class main(ctk.CTk):
         self.FlatExtruder45UnitLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Extruder"),
             fg_color="transparent",
-            text="(kg/hr)",
+            text="(%)",
         )
         self.FlatExtruder45Label.grid_forget()
         self.FlatExtruder45Entry = ctk.CTkEntry(
@@ -904,7 +905,7 @@ class main(ctk.CTk):
             text="Cladding Extruder 75",
         )
         self.CladdingExtruder75UnitLabel = ctk.CTkLabel(
-            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
+            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(%)"
         )
         self.CladdingExtruder75Label.grid_forget()
         self.CladdingExtruder75Entry = ctk.CTkEntry(
@@ -921,10 +922,80 @@ class main(ctk.CTk):
             text="Cladding Extruder 45",
         )
         self.CladdingExtruder45UnitLabel = ctk.CTkLabel(
-            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
+            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(%)"
         )
         self.CladdingExtruder45Label.grid_forget()
         self.CladdingExtruder45Entry = ctk.CTkEntry(
+            self.MachineTabs.tab("Extruder"),
+            placeholder_text="",
+            width=70,
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+
+        self.FlatExtruder75LabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"),
+            fg_color="transparent",
+            text="Flat Extruder 75",
+        )
+        self.FlatExtruder75UnitLabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
+        )
+        self.FlatExtruder75LabelF.grid_forget()
+        self.FlatExtruder75EntryF = ctk.CTkEntry(
+            self.MachineTabs.tab("Extruder"),
+            placeholder_text="",
+            width=70,
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+
+        self.FlatExtruder45LabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"),
+            fg_color="transparent",
+            text="Flat Extruder 45",
+        )
+        self.FlatExtruder45UnitLabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"),
+            fg_color="transparent",
+            text="(kg/hr)",
+        )
+        self.FlatExtruder45LabelF.grid_forget()
+        self.FlatExtruder45EntryF = ctk.CTkEntry(
+            self.MachineTabs.tab("Extruder"),
+            placeholder_text="",
+            width=70,
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+
+        self.CladdingExtruder75LabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"),
+            fg_color="transparent",
+            text="Cladding Extruder 75",
+        )
+        self.CladdingExtruder75UnitLabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
+        )
+        self.CladdingExtruder75LabelF.grid_forget()
+        self.CladdingExtruder75EntryF = ctk.CTkEntry(
+            self.MachineTabs.tab("Extruder"),
+            placeholder_text="",
+            width=70,
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+
+        self.CladdingExtruder45LabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"),
+            fg_color="transparent",
+            text="Cladding Extruder 45",
+        )
+        self.CladdingExtruder45UnitLabelF = ctk.CTkLabel(
+            self.MachineTabs.tab("Extruder"), fg_color="transparent", text="(kg/hr)"
+        )
+        self.CladdingExtruder45LabelF.grid_forget()
+        self.CladdingExtruder45EntryF = ctk.CTkEntry(
             self.MachineTabs.tab("Extruder"),
             placeholder_text="",
             width=70,
@@ -1571,7 +1642,7 @@ class main(ctk.CTk):
         self.maxFactorEntry.grid_forget()
         self.flat75MaxLabel.grid_forget()
         self.flat75MaxUnitLabel.grid_forget()
-        self.falt75MaxEntry.grid_forget()
+        self.flat75MaxEntry.grid_forget()
         self.flat45MaxLabel.grid_forget()
         self.flat45MaxUnitLabel.grid_forget()
         self.flat45MaxEntry.grid_forget()
@@ -1714,6 +1785,30 @@ class main(ctk.CTk):
         self.finalPitchUnitLabel.grid(row=2, column=10, padx=1, pady=5, sticky="w")
 
     def calcSpeeds(self, event=None):
+        self.FlatExtruder75EntryF.configure(state="normal")
+        self.FlatExtruder75EntryF.delete(0, ctk.END)
+        self.FlatExtruder75EntryF.configure(
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+        self.FlatExtruder45EntryF.configure(state="normal")
+        self.FlatExtruder45EntryF.delete(0, ctk.END)
+        self.FlatExtruder45EntryF.configure(
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+        self.CladdingExtruder75EntryF.configure(state="normal")
+        self.CladdingExtruder75EntryF.delete(0, ctk.END)
+        self.CladdingExtruder75EntryF.configure(
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+        self.CladdingExtruder45EntryF.configure(state="normal")
+        self.CladdingExtruder45EntryF.delete(0, ctk.END)
+        self.CladdingExtruder45EntryF.configure(
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
         try:
             temP = self.MoldSpeedEntry.get()
             if self.isreal(temP) == False:
@@ -1791,14 +1886,26 @@ class main(ctk.CTk):
             * self.W4
         )
         try:
+            self.FlatExtruder75Entry.configure(
+                fg_color=("white", "grey20"), border_color=("#999EA3", "grey30")
+            )
+            self.FlatExtruder45Entry.configure(
+                fg_color=("#bababa", "#262626"), border_color=("#999EA3", "grey30")
+            )
+            self.cladding75MaxEntry.configure(
+                fg_color=("white", "grey20"), border_color=("#999EA3", "grey30")
+            )
+            self.cladding45MaxEntry.configure(
+                fg_color=("white", "grey20"), border_color=("#999EA3", "grey30")
+            )
             # check if inputs are numbers
             if self.isreal(self.maxFactorEntry.get()) == False:
                 self.maxFactorEntry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
                 raise Exception("Max factor must be a number")
-            if self.isreal(self.falt75MaxEntry.get()) == False:
-                self.falt75MaxEntry.configure(
+            if self.isreal(self.flat75MaxEntry.get()) == False:
+                self.flat75MaxEntry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
                 raise Exception("Flat extruder 75 max must be a number")
@@ -1858,46 +1965,146 @@ class main(ctk.CTk):
                 )
                 raise Exception("Cladding extruder 45 must be a number")
 
-            if flatExtruder * float(self.FlatExtruder75Entry.get()) > float(
-                self.falt75MaxEntry.get()
-            ) * float(self.maxFactorEntry.get()):
+            flatExtruder75 = flatExtruder * float(self.FlatExtruder75Entry.get()) / 100
+            self.FlatExtruder75EntryF.configure(state="normal")
+            self.FlatExtruder75EntryF.delete(0, ctk.END)
+            self.FlatExtruder75EntryF.insert(0, str(round(flatExtruder75, 2)))
+            self.FlatExtruder75EntryF.configure(
+                state="disabled",
+                fg_color=("#bababa", "#262626"),
+            )
+            flatExtruder45 = flatExtruder * float(self.FlatExtruder45Entry.get()) / 100
+            self.FlatExtruder45EntryF.configure(state="normal")
+            self.FlatExtruder45EntryF.delete(0, ctk.END)
+            self.FlatExtruder45EntryF.insert(0, str(round(flatExtruder45, 2)))
+            self.FlatExtruder45EntryF.configure(
+                state="disabled",
+                fg_color=("#bababa", "#262626"),
+            )
+            claddingExtruder75 = (
+                claddingExtruder * float(self.CladdingExtruder75Entry.get()) / 100
+            )
+            self.CladdingExtruder75EntryF.configure(state="normal")
+            self.CladdingExtruder75EntryF.delete(0, ctk.END)
+            self.CladdingExtruder75EntryF.insert(0, str(round(claddingExtruder75, 2)))
+            self.CladdingExtruder75EntryF.configure(
+                state="disabled",
+                fg_color=("#bababa", "#262626"),
+            )
+            claddingExtruder45 = (
+                claddingExtruder * float(self.CladdingExtruder45Entry.get()) / 100
+            )
+            self.CladdingExtruder45EntryF.configure(state="normal")
+            self.CladdingExtruder45EntryF.delete(0, ctk.END)
+            self.CladdingExtruder45EntryF.insert(0, str(round(claddingExtruder45, 2)))
+            self.CladdingExtruder45EntryF.configure(
+                state="disabled",
+                fg_color=("#bababa", "#262626"),
+            )
+            self.FlatExtruder75Entry.bind("<FocusOut>", self.calcSpeeds)
+            self.FlatExtruder75Entry.bind("<Return>", self.calcSpeeds)
+            self.flat75MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+            self.flat75MaxEntry.bind("<Return>", self.calcSpeeds)
+            self.FlatExtruder45Entry.bind("<FocusOut>", self.calcSpeeds)
+            self.FlatExtruder45Entry.bind("<Return>", self.calcSpeeds)
+            self.flat45MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+            self.flat45MaxEntry.bind("<Return>", self.calcSpeeds)
+            self.CladdingExtruder75Entry.bind("<FocusOut>", self.calcSpeeds)
+            self.CladdingExtruder75Entry.bind("<Return>", self.calcSpeeds)
+            self.cladding75MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+            self.cladding75MaxEntry.bind("<Return>", self.calcSpeeds)
+            self.CladdingExtruder45Entry.bind("<FocusOut>", self.calcSpeeds)
+            self.CladdingExtruder45Entry.bind("<Return>", self.calcSpeeds)
+            self.cladding45MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+            self.cladding45MaxEntry.bind("<Return>", self.calcSpeeds)
+            if (
+                flatExtruder75
+                > float(self.flat75MaxEntry.get())
+                * float(self.maxFactorEntry.get())
+                / 100
+            ):
                 self.FlatExtruder75Entry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
-                raise Exception("Flat extruder 75 is too high")
-            self.FlatExtruder75Entry.configure(
-                fg_color=("white", "grey20"), border_color=("#999EA3", "grey30")
-            )
-            if flatExtruder * float(self.FlatExtruder45Entry.get()) > float(
-                self.flat45MaxEntry.get()
-            ) * float(self.maxFactorEntry.get()):
-                self.FlatExtruder45Entry.configure(
+                self.flat75MaxEntry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
-                raise Exception("Flat extruder 75 is too high")
-            self.FlatExtruder45Entry.configure(
-                fg_color=("#bababa", "#262626"), border_color=("#999EA3", "grey30")
+                raise Exception("Flat extruder 75 exceeded max")
+            self.FlatExtruder75Entry.configure(
+                fg_color=("white", "grey20"),
+                border_color=("#999EA3", "grey30"),
+            )
+            self.flat75MaxEntry.configure(
+                fg_color=("white", "grey20"),
+                border_color=("#999EA3", "grey30"),
             )
 
-            if claddingExtruder * float(self.CladdingExtruder75Entry.get()) > float(
-                self.cladding75MaxEntry.get()
-            ) * float(self.maxFactorEntry.get()):
+            if (
+                flatExtruder45
+                > float(self.flat45MaxEntry.get())
+                * float(self.maxFactorEntry.get())
+                / 100
+            ):
+                self.FlatExtruder45Entry.configure(
+                    fg_color=("#bababa", "#262626"),
+                    border_color=("#999EA3", "grey30"),
+                )
+                self.flat45MaxEntry.configure(
+                    fg_color=("white", "grey20"),
+                    border_color=("#999EA3", "grey30"),
+                )
+
+                raise Exception("Flat extruder 45 exceeded max")
+            self.FlatExtruder45Entry.configure(
+                fg_color=("#bababa", "#262626"),
+                border_color=("#999EA3", "grey30"),
+            )
+            self.flat45MaxEntry.configure(
+                fg_color=("white", "grey20"),
+                border_color=("#999EA3", "grey30"),
+            )
+
+            if (
+                claddingExtruder75
+                > float(self.cladding75MaxEntry.get())
+                * float(self.maxFactorEntry.get())
+                / 100
+            ):
+                self.CladdingExtruder75Entry.configure(
+                    fg_color=("#e08288", "#6e4441"), border_color="#f51505"
+                )
                 self.cladding75MaxEntry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
-                raise Exception("Clat extruder 75 is too high")
+
+                raise Exception("Clad extruder 75 exceeded max")
             self.CladdingExtruder75Entry.configure(
-                fg_color=("#bababa", "#262626"), border_color=("#999EA3", "grey30")
+                fg_color=("white", "grey20"),
+                border_color=("#999EA3", "grey30"),
+            )
+            self.cladding75MaxEntry.configure(
+                fg_color=("white", "grey20"),
+                border_color=("#999EA3", "grey30"),
             )
 
-            if claddingExtruder * float(self.CladdingExtruder45Entry.get()) > float(
-                self.cladding45MaxEntry.get()
-            ) * float(self.maxFactorEntry.get()):
+            if (
+                claddingExtruder45
+                > float(self.cladding45MaxEntry.get())
+                * float(self.maxFactorEntry.get())
+                / 100
+            ):
+                self.CladdingExtruder45Entry.configure(
+                    fg_color=("#e08288", "#6e4441"), border_color="#f51505"
+                )
                 self.cladding45MaxEntry.configure(
                     fg_color=("#e08288", "#6e4441"), border_color="#f51505"
                 )
-                raise Exception("Clat extruder 45 is too high")
-            self.CladdingExtruder75Entry.configure(
+
+                raise Exception("Clad extruder 45 exceeded max")
+            self.CladdingExtruder45Entry.configure(
+                fg_color=("#bababa", "#262626"), border_color=("#999EA3", "grey30")
+            )
+            self.cladding45MaxEntry.configure(
                 fg_color=("white", "grey20"), border_color=("#999EA3", "grey30")
             )
         except Exception as e:
@@ -2034,7 +2241,7 @@ class main(ctk.CTk):
         self.maxFactorEntry.grid(row=0, column=2, padx=10, pady=5, sticky="w")
         self.flat75MaxLabel.grid(row=1, column=1, padx=10, pady=5, sticky="w")
         self.flat75MaxUnitLabel.grid(row=1, column=3, padx=10, pady=5)
-        self.falt75MaxEntry.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+        self.flat75MaxEntry.grid(row=1, column=2, padx=10, pady=5, sticky="w")
         self.flat45MaxLabel.grid(row=2, column=1, padx=10, pady=5, sticky="w")
         self.flat45MaxUnitLabel.grid(row=2, column=3, padx=10, pady=5)
         self.flat45MaxEntry.grid(row=2, column=2, padx=10, pady=5, sticky="w")
@@ -2056,6 +2263,19 @@ class main(ctk.CTk):
         self.CladdingExtruder45Label.grid(row=4, column=4, padx=10, pady=5, sticky="w")
         self.CladdingExtruder45UnitLabel.grid(row=4, column=6, padx=10, pady=5)
         self.CladdingExtruder45Entry.grid(row=4, column=5, padx=10, pady=5, sticky="w")
+
+        self.FlatExtruder75LabelF.grid(row=1, column=7, padx=10, pady=5, sticky="w")
+        self.FlatExtruder75UnitLabelF.grid(row=1, column=9, padx=10, pady=5)
+        self.FlatExtruder75EntryF.grid(row=1, column=8, padx=10, pady=5, sticky="w")
+        self.FlatExtruder45LabelF.grid(row=2, column=7, padx=10, pady=5, sticky="w")
+        self.FlatExtruder45UnitLabelF.grid(row=2, column=9, padx=10, pady=5)
+        self.FlatExtruder45EntryF.grid(row=2, column=8, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder75LabelF.grid(row=3, column=7, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder75UnitLabelF.grid(row=3, column=9, padx=10, pady=5)
+        self.CladdingExtruder75EntryF.grid(row=3, column=8, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder45LabelF.grid(row=4, column=7, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder45UnitLabelF.grid(row=4, column=9, padx=10, pady=5)
+        self.CladdingExtruder45EntryF.grid(row=4, column=8, padx=10, pady=5, sticky="w")
 
         self.MoldSpeedLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         self.MoldSpeedUnitLabel.grid(row=0, column=2, padx=10, pady=5)
@@ -2679,7 +2899,7 @@ class main(ctk.CTk):
         self.maxFactorEntry.grid(row=0, column=2, padx=10, pady=5, sticky="w")
         self.flat75MaxLabel.grid(row=1, column=1, padx=10, pady=5, sticky="w")
         self.flat75MaxUnitLabel.grid(row=1, column=3, padx=10, pady=5)
-        self.falt75MaxEntry.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+        self.flat75MaxEntry.grid(row=1, column=2, padx=10, pady=5, sticky="w")
         self.flat45MaxLabel.grid(row=2, column=1, padx=10, pady=5, sticky="w")
         self.flat45MaxUnitLabel.grid(row=2, column=3, padx=10, pady=5)
         self.flat45MaxEntry.grid(row=2, column=2, padx=10, pady=5, sticky="w")
@@ -2701,6 +2921,19 @@ class main(ctk.CTk):
         self.CladdingExtruder45Label.grid(row=4, column=4, padx=10, pady=5, sticky="w")
         self.CladdingExtruder45UnitLabel.grid(row=4, column=6, padx=10, pady=5)
         self.CladdingExtruder45Entry.grid(row=4, column=5, padx=10, pady=5, sticky="w")
+
+        self.FlatExtruder75LabelF.grid(row=1, column=7, padx=10, pady=5, sticky="w")
+        self.FlatExtruder75UnitLabelF.grid(row=1, column=9, padx=10, pady=5)
+        self.FlatExtruder75EntryF.grid(row=1, column=8, padx=10, pady=5, sticky="w")
+        self.FlatExtruder45LabelF.grid(row=2, column=7, padx=10, pady=5, sticky="w")
+        self.FlatExtruder45UnitLabelF.grid(row=2, column=9, padx=10, pady=5)
+        self.FlatExtruder45EntryF.grid(row=2, column=8, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder75LabelF.grid(row=3, column=7, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder75UnitLabelF.grid(row=3, column=9, padx=10, pady=5)
+        self.CladdingExtruder75EntryF.grid(row=3, column=8, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder45LabelF.grid(row=4, column=7, padx=10, pady=5, sticky="w")
+        self.CladdingExtruder45UnitLabelF.grid(row=4, column=9, padx=10, pady=5)
+        self.CladdingExtruder45EntryF.grid(row=4, column=8, padx=10, pady=5, sticky="w")
 
         self.MoldSpeedLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         self.MoldSpeedUnitLabel.grid(row=0, column=2, padx=10, pady=5)
