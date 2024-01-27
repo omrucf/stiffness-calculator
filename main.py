@@ -35,34 +35,19 @@ class main(ctk.CTk):
                                         weight REAL NOT NULL
                                     ); """
         )
-        self.limitsCur.execute(
-            """ CREATE TABLE IF NOT EXISTS diameter (
-                                        id INTEGER PRIMARY KEY,
-                                        diameter REAL NOT NULL,
-                                        min_ID REAL NOT NULL,
-                                        min_wall_thickness REAL NOT NULL,
-                                        socket_outer_circum_BD REAL,
-                                        socket_outer_circum_AD REAL,
-                                        header_inner_circum REAL
-                                    ); """
-        )
-        self.limitsCur.execute(
-            """ CREATE TABLE IF NOT EXISTS moldSize (
-                                        id INTEGER PRIMARY KEY,
-                                        mold_size REAL NOT NULL,
-                                        header_inner_circum REAL NOT NULL,
-                                        body_circum REAL NOT NULL,
-                                        head_diameter2 REAL NOT NULL,
-                                        body_diameter3 REAL NOT NULL
-                                    ); """
-        )
-
+        
         self.limitsCur.execute(
             """ CREATE TABLE IF NOT EXISTS moldDiameter (
                                         id INTEGER PRIMARY KEY,
                                         mold_diameter REAL NOT NULL,
-                                        mold_optimal_temperature REAL NOT NULL
-                                    ); """
+                                        mold_optimal_temperature REAL NOT NULL);"""
+        )
+        self.limitsCur.execute(
+            """ CREATE TABLE IF NOT EXISTS diameter (
+                id INTEGER PRIMARY KEY,
+                diameter REAL NOT NULL,
+                min_wall_thickness REAL NOT NULL,
+                body_diameter3 REAL NOT NULL) """
         )
         self.limitsConn.commit()
 
