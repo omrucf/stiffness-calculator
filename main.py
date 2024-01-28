@@ -27,7 +27,7 @@ class main(ctk.CTk):
         # self.calcFrame.grid(row=0, column=1, sticky="nsew")
 
         # creating databases
-        self.conn = sqlite3.connect("profiles.db")
+        self.conn = sqlite3.connect("data.db")
         self.cur = self.conn.cursor()
         self.cur.execute(
     """CREATE TABLE IF NOT EXISTS diameter (
@@ -1484,11 +1484,11 @@ class main(ctk.CTk):
         self.calcPitch("")
         self.pitchEntry.configure(
             state="disabled",
-            fg_color=("#bababa", "#262626"),
+
         )
         self.WallThicknessEntry.configure(
             state="disabled",
-            fg_color=("#bababa", "#262626"),
+
         )
 
     # create same function as dieCommand but use ppd and ppfilmthickness ppwtEntries
@@ -1517,11 +1517,11 @@ class main(ctk.CTk):
         )
         self.PPDiameterEntry.configure(
             state="disabled",
-            fg_color=("#bababa", "#262626"),
+
         )
         self.PPFilmThicknessEntry.configure(
             state="disabled",
-            fg_color=("#bababa", "#262626"),
+
         )
 
     def moreF(self):
@@ -3119,7 +3119,7 @@ class main(ctk.CTk):
             fg_color=("#bababa", "#262626"),
         )
         self.cur.execute(
-            "SELECT min_wall_thickness FROM diameter pipe_ameter="
+            "SELECT min_wall_thickness FROM diameter WHERE pipe_diameter="
             + str(int(self.pd))
         )
         minWallThickness = self.cur.fetchall()

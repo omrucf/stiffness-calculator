@@ -31,7 +31,7 @@ class Edit(ctk.CTkToplevel):
         else:
             self.title("Edit")
 
-        self.conn = sqlite3.connect("profiles.db")
+        self.conn = sqlite3.connect("data.db")
         self.cur = self.conn.cursor()
 
         self.Frame = ctk.CTkScrollableFrame(
@@ -123,7 +123,7 @@ class Edit(ctk.CTkToplevel):
         try:
             self.cur.execute("SELECT * FROM " + table)
         except:
-            self.conn = sqlite3.connect("profiles.db")
+            self.conn = sqlite3.connect("data.db")
             self.cur = self.conn.cursor()
             self.cur.execute("SELECT * FROM " + table)
         self.Frame.destroy()
