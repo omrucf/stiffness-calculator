@@ -2,6 +2,7 @@ import customtkinter as ctk
 import math
 import sqlite3
 from PIL import Image
+from edit import Edit
 
 
 class main(ctk.CTk):
@@ -9,6 +10,8 @@ class main(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+
+        self.wins = 0
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -24,34 +27,26 @@ class main(ctk.CTk):
         # self.calcFrame.grid(row=0, column=1, sticky="nsew")
 
         # creating databases
-        self.limitsConn = sqlite3.connect("limits.db")
-        self.limitsCur = self.limitsConn.cursor()
-        self.profilesConn = sqlite3.connect("profiles.db")
-        self.profilesCur = self.profilesConn.cursor()
-        self.limitsCur.execute(
-            """ CREATE TABLE IF NOT EXISTS ppwt (
-                                        id integer PRIMARY KEY,
-                                        pp_weight REAL NOT NULL,
-                                        weight REAL NOT NULL
-                                    ); """
-        )
-        
-        self.limitsCur.execute(
-            """ CREATE TABLE IF NOT EXISTS moldDiameter (
-                                        id INTEGER PRIMARY KEY,
-                                        mold_diameter REAL NOT NULL,
-                                        mold_optimal_temperature REAL NOT NULL);"""
-        )
-        self.limitsCur.execute(
-            """ CREATE TABLE IF NOT EXISTS diameter (
+        self.conn = sqlite3.connect("profiles.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute(
+    """CREATE TABLE IF NOT EXISTS diameter (
                 id INTEGER PRIMARY KEY,
-                diameter REAL NOT NULL,
+                pipe_diameter REAL NOT NULL,
                 min_wall_thickness REAL NOT NULL,
-                body_diameter3 REAL NOT NULL) """
-        )
-        self.limitsConn.commit()
+                mold_diameter REAL NOT NULL, 
+                mold_optimal_temperature REAL);"""
+)
 
-        self.profilesCur.execute(
+        self.cur.execute(
+    """CREATE TABLE IF NOT EXISTS ppwt (
+                                        id integer PRIMARY KEY,
+                                        pp_diameter REAL NOT NULL,
+                                        weight REAL NOT NULL
+                                    );"""
+)
+
+        self.cur.execute(
             """ CREATE TABLE IF NOT EXISTS rawMaterial (
                                         id INTEGER PRIMARY KEY,
                                         profile TEXT NOT NULL,
@@ -60,7 +55,7 @@ class main(ctk.CTk):
                                         shrinkage REAL NOT NULL
                                     ); """
         )
-        self.profilesCur.execute(
+        self.cur.execute(
             """ CREATE TABLE IF NOT EXISTS flatDie (
                                         id INTEGER PRIMARY KEY,
                                         profile TEXT NOT NULL,
@@ -69,7 +64,7 @@ class main(ctk.CTk):
                                         thickness REAL NOT NULL
                                     ); """
         )
-        self.profilesCur.execute(
+        self.cur.execute(
             """ CREATE TABLE IF NOT EXISTS claddingDie (
                                         id INTEGER PRIMARY KEY,
                                         profile TEXT NOT NULL,
@@ -77,7 +72,7 @@ class main(ctk.CTk):
                                         pp_thickness REAL NOT NULL
                                     ); """
         )
-        self.profilesConn.commit()
+        self.conn.commit()
 
         # app
         self.title("Stiffness calculator")
@@ -140,18 +135,10 @@ class main(ctk.CTk):
             text_color=("gray10", "gray90"),
             hover_color=("gray70", "gray30"),
             anchor="w",
-            text="ppwt",
+            text="pp weight",
             command=lambda: self.select_frame_by_name("ppwt"),
         )
         self.ppwtTable.grid(row=1, column=0, pady=5, padx=5)
-
-        # self.appearance_mode_menu = ctk.CTkOptionMenu(
-        #     self.navigation_frame,
-        #     values=["System", "Dark", "Light"],
-        #     command=self.change_appearance_mode_event,
-        #     width=100,
-        # )
-        # self.appearance_mode_menu.grid(row=20, column=0, padx=20, pady=20, sticky="s")
 
         self.diameterTable = ctk.CTkButton(
             self.navigation_frame,
@@ -167,19 +154,6 @@ class main(ctk.CTk):
         )
         self.diameterTable.grid(row=2, column=0, pady=5, padx=2)
 
-        self.moldDiameterTable = ctk.CTkButton(
-            self.navigation_frame,
-            corner_radius=0,
-            height=40,
-            border_spacing=10,
-            fg_color="transparent",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
-            anchor="w",
-            text="mold diameter",
-            command=lambda: self.select_frame_by_name("moldDiameter"),
-        )
-        self.moldDiameterTable.grid(row=4, column=0, pady=5, padx=2)
         self.materialProfileB = ctk.CTkButton(
             self.navigation_frame,
             corner_radius=0,
@@ -353,7 +327,7 @@ class main(ctk.CTk):
         )
         self.modesLabel.grid(row=0, column=0, pady=2, sticky="w")
 
-        items = self.profilesCur.execute("SELECT profile FROM rawMaterial").fetchall()
+        items = self.cur.execute("SELECT profile FROM rawMaterial").fetchall()
         items = [item[0] for item in items]
 
         self.materialprofile = ctk.CTkOptionMenu(
@@ -370,7 +344,7 @@ class main(ctk.CTk):
 
         self.materialprofile.set("Material Profiles")
 
-        items = self.profilesCur.execute("SELECT profile FROM flatDie").fetchall()
+        items = self.cur.execute("SELECT profile FROM flatDie").fetchall()
         items = [item[0] for item in items]
 
         self.flatDieProfile = ctk.CTkOptionMenu(
@@ -388,7 +362,7 @@ class main(ctk.CTk):
 
         self.flatDieProfile.set("Flat die profiles")
 
-        items = self.profilesCur.execute("SELECT profile FROM claddingDie").fetchall()
+        items = self.cur.execute("SELECT profile FROM claddingDie").fetchall()
         items = [item[0] for item in items]
 
         self.claddingDieProfile = ctk.CTkOptionMenu(
@@ -686,16 +660,7 @@ class main(ctk.CTk):
 
         #
 
-        # machine limits
 
-        # self.MLLabel = ctk.CTkLabel(
-        #     self.machineLimitsFrame,
-        #     fg_color="transparent",
-        #     text="Machine Limits",
-        # )
-        # self.MLLabel.grid(
-        #     row=0, column=13, padx=5, pady=5, columnspan=2, sticky="ne"
-        # )
 
         self.MachineTabs = ctk.CTkTabview(
             self.calcFrame,
@@ -1248,7 +1213,6 @@ class main(ctk.CTk):
         #
 
     def f45(self, event):
-        print("f45: " + str(event))
         if self.FlatExtruder75Entry.get() != "":
             self.FlatExtruder45Entry.configure(state="normal")
             self.FlatExtruder45Entry.delete(0, ctk.END)
@@ -1261,7 +1225,6 @@ class main(ctk.CTk):
             )
 
     def c45(self, event):
-        print("c45: " + str(event))
         if self.CladdingExtruder75Entry.get() != "":
             self.CladdingExtruder45Entry.configure(state="normal")
             self.CladdingExtruder45Entry.delete(0, ctk.END)
@@ -1276,9 +1239,7 @@ class main(ctk.CTk):
     def select_frame_by_name(self, name):
         # set button color for selected button
         # self.Frame.destroy()
-        self.moldDiameterTable.configure(
-            fg_color=("gray75", "gray25") if name == "moldDiameter" else "transparent"
-        )
+
         self.diameterTable.configure(
             fg_color=("gray75", "gray25") if name == "diameter" else "transparent"
         )
@@ -1304,26 +1265,25 @@ class main(ctk.CTk):
         else:
             self.calcFrame.grid_forget()
         if name == "ppwt":
-            self.refresh("ppwt", "limits", None)
+            self.refresh("ppwt",  None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "diameter":
-            self.refresh("diameter", "limits", None)
+            self.refresh("diameter", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "moldDiameter":
-            self.refresh("moldDiameter", "limits", None)
+            self.refresh("moldDiameter",  None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "rawMaterial":
-            self.refresh("rawMaterial", "profiles", None)
+            self.refresh("rawMaterial", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "flatDie":
-            self.refresh("flatDie", "profiles", None)
+            self.refresh("flatDie", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "claddingDie":
-            self.refresh("claddingDie", "profiles", None)
+            self.refresh("claddingDie", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
 
     def calcPitch(self, event):
-        print("calcPitch: " + str(event))
         if self.pitchEntry.get() != "" and self.pitchFactorEntry.get() != "":
             self.finalPitchEntry.configure(state="normal")
             self.finalPitchEntry.delete(0, ctk.END)
@@ -1428,13 +1388,13 @@ class main(ctk.CTk):
             elif Frame == self.machineLimitsFrame:
                 self.machineLimitsError.configure(text="")
 
-        items = self.profilesCur.execute("SELECT profile FROM rawMaterial").fetchall()
+        items = self.cur.execute("SELECT profile FROM rawMaterial").fetchall()
         items = [item[0] for item in items]
         self.materialprofile.configure(values=list(items))
-        items = self.profilesCur.execute("SELECT profile FROM flatDie").fetchall()
+        items = self.cur.execute("SELECT profile FROM flatDie").fetchall()
         items = [item[0] for item in items]
         self.flatDieProfile.configure(values=list(items))
-        items = self.profilesCur.execute("SELECT profile FROM claddingDie").fetchall()
+        items = self.cur.execute("SELECT profile FROM claddingDie").fetchall()
         items = [item[0] for item in items]
         self.claddingDieProfile.configure(values=list(items))
 
@@ -1449,7 +1409,7 @@ class main(ctk.CTk):
         #
 
     def materialCommand(self, material):
-        items = self.profilesCur.execute("SELECT profile FROM rawMaterial").fetchall()
+        items = self.cur.execute("SELECT profile FROM rawMaterial").fetchall()
         items = [item[0] for item in items]
         self.materialprofile.configure(values=list(items))
 
@@ -1463,7 +1423,7 @@ class main(ctk.CTk):
         self.elasticEntry.insert(
             0,
             str(
-                self.profilesCur.execute(
+                self.cur.execute(
                     "SELECT elastic_modulus FROM rawMaterial WHERE profile=?",
                     (material,),
                 ).fetchone()[0]
@@ -1472,7 +1432,7 @@ class main(ctk.CTk):
         self.densityEntry.insert(
             0,
             str(
-                self.profilesCur.execute(
+                self.cur.execute(
                     "SELECT density FROM rawMaterial WHERE profile=?", (material,)
                 ).fetchone()[0]
             ),
@@ -1480,7 +1440,7 @@ class main(ctk.CTk):
         self.shrinkageEntry.insert(
             0,
             str(
-                self.profilesCur.execute(
+                self.cur.execute(
                     "SELECT shrinkage FROM rawMaterial WHERE profile=?", (material,)
                 ).fetchone()[0]
             ),
@@ -1499,15 +1459,15 @@ class main(ctk.CTk):
         )
 
     def dieCommand(self, die):
-        items = self.profilesCur.execute("SELECT profile FROM flatDie").fetchall()
+        items = self.cur.execute("SELECT profile FROM flatDie").fetchall()
         items = [item[0] for item in items]
         self.flatDieProfile.configure(values=list(items))
         self.pitchEntry.configure(state="normal")
         self.WallThicknessEntry.configure(state="normal")
-        flatdie = self.profilesCur.execute(
+        flatdie = self.cur.execute(
             "SELECT pitch FROM flatDie WHERE profile=?", (die,)
         ).fetchone()[0]
-        thickness = self.profilesCur.execute(
+        thickness = self.cur.execute(
             "SELECT thickness FROM flatDie WHERE profile=?", (die,)
         ).fetchone()[0]
         self.pitchEntry.delete(0, ctk.END)
@@ -1534,15 +1494,15 @@ class main(ctk.CTk):
     # create same function as dieCommand but use ppd and ppfilmthickness ppwtEntries
 
     def claddingCommand(self, die):
-        items = self.profilesCur.execute("SELECT profile FROM claddingDie").fetchall()
+        items = self.cur.execute("SELECT profile FROM claddingDie").fetchall()
         items = [item[0] for item in items]
         self.claddingDieProfile.configure(values=list(items))
         self.PPDiameterEntry.configure(state="normal")
         self.PPFilmThicknessEntry.configure(state="normal")
-        ppd = self.profilesCur.execute(
+        ppd = self.cur.execute(
             "SELECT ppd FROM claddingDie WHERE profile=?", (die,)
         ).fetchone()[0]
-        ppfilmthickness = self.profilesCur.execute(
+        ppfilmthickness = self.cur.execute(
             "SELECT pp_thickness FROM claddingDie WHERE profile=?", (die,)
         ).fetchone()[0]
         self.PPDiameterEntry.delete(0, ctk.END)
@@ -2510,15 +2470,15 @@ class main(ctk.CTk):
             state="disabled",
             fg_color=("#bababa", "#262626"),
         )
-        self.limitsCur.execute(
-            "SELECT min_wall_thickness FROM diameter WHERE diameter="
+        self.cur.execute(
+            "SELECT min_wall_thickness FROM diameter WHERE pipe_diameter="
             + str(int(self.pd))
         )
-        minWallThickness = self.limitsCur.fetchall()
-        self.limitsCur.execute(
-            "SELECT body_diameter3 FROM diameter WHERE diameter=" + str(int(self.pd))
+        minWallThickness = self.cur.fetchall()
+        self.cur.execute(
+            "SELECT mold_diameter FROM diameter WHERE pipe_diameter=" + str(int(self.pd))
         )
-        newPd = self.limitsCur.fetchall()
+        newPd = self.cur.fetchall()
         try:
             newPd = newPd[0]
         except:
@@ -2527,10 +2487,9 @@ class main(ctk.CTk):
             )
             self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
             self.pd = [0]
-        print(newPd[0])
+
         self.pd = float(newPd[0])
-        print(self.pd)
-        print(minWallThickness)
+
         try:
             minWallThickness = minWallThickness[0]
         except:
@@ -2803,11 +2762,11 @@ class main(ctk.CTk):
             return
 
         self.pd = float(self.pipeDiameterEnry.get())
-        self.limitsCur.execute(
-            "SELECT min_wall_thickness FROM diameter WHERE diameter="
+        self.cur.execute(
+            "SELECT min_wall_thickness FROM diameter WHERE pipe_diameter="
             + str(int(self.pd))
         )
-        minWallThickness = self.limitsCur.fetchall()
+        minWallThickness = self.cur.fetchall()
         try:
             minWallThickness = minWallThickness[0]
         except:
@@ -2815,12 +2774,12 @@ class main(ctk.CTk):
                 text="error: No data for this pipe diameter in  wall thickness"
             )
             minWallThickness = [0]
-        print(minWallThickness)
+
         minWallThickness = float(minWallThickness[0])
-        flatDies = self.profilesCur.execute(
+        flatDies = self.cur.execute(
             "SELECT profile FROM flatDie WHERE thickness >=" + str(minWallThickness)
         ).fetchall()
-        claddingDies = self.profilesCur.execute(
+        claddingDies = self.cur.execute(
             "SELECT profile FROM claddingDie"
         ).fetchall()
         for i in range(len(flatDies)):
@@ -2828,34 +2787,36 @@ class main(ctk.CTk):
         for i in range(len(claddingDies)):
             claddingDies[i] = claddingDies[i][0]
         results = []
-        print(flatDies)
-        print(claddingDies)
+
         for flatDie in flatDies:
             for claddingDie in claddingDies:
                 self.flatDieProfile.set(flatDie)
                 self.claddingDieProfile.set(claddingDie)
                 self.dieCommand(flatDie)
                 self.claddingCommand(claddingDie)
-                self.calculatePR()
-                if self.Sn > float(self.reqSnEntries.get()) and self.pp_dist > 20:
-                    self.resError.configure(text="")
-                    results.append(
-                        [
-                            self.flatDieProfile.get(),
-                            self.claddingDieProfile.get(),
-                            self.W0,
-                        ]
-                    )
+                self.calcPRSn()
+                if self.Sn >= float(self.reqSnEntries.get()):
+                    self.calcPRW()
+                    if self.pp_dist >= 20:
+                        self.resError.configure(text="")
+                        results.append(
+                            [
+                                self.flatDieProfile.get(),
+                                self.claddingDieProfile.get(),
+                                self.W0,
+                            ]
+                        )
+                    else:
+                        self.resError.configure(text="Can't be optimized")
                 else:
                     self.resError.configure(text="Can't be optimized")
                     # return
 
-        print("before sort", results)
         try:
             results.sort(key=lambda x: x[2])
-            print("after sort", results)
+
             best = results[0]
-            print("best", best)
+
         except Exception as e:
             self.SnLabel.configure(text="")
             self.W1Label.configure(text="")
@@ -2867,7 +2828,9 @@ class main(ctk.CTk):
             self.WpLabel.configure(text="")
             self.WzLabel.configure(text="")
             self.W0Label.configure(text="")
-            print(e)
+            self.SnL.configure(text="")
+            self.W0L.configure(text="")
+
             self.resError.configure(text="Can't be optimized")
             self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
             return
@@ -3138,7 +3101,7 @@ class main(ctk.CTk):
             fg_color=("#bababa", "#262626"), border_color=("#999EA3", "grey30")
         )
 
-    def calculatePR(self):
+    def calcPRSn(self):
         self.resError.configure(text="")
         self.resError.grid_forget()
         self.density = float(self.densityEntry.get())
@@ -3155,15 +3118,15 @@ class main(ctk.CTk):
             state="disabled",
             fg_color=("#bababa", "#262626"),
         )
-        self.limitsCur.execute(
-            "SELECT min_wall_thickness FROM diameter WHERE diameter="
+        self.cur.execute(
+            "SELECT min_wall_thickness FROM diameter pipe_ameter="
             + str(int(self.pd))
         )
-        minWallThickness = self.limitsCur.fetchall()
-        self.limitsCur.execute(
-            "SELECT body_diameter3 FROM diameter WHERE diameter=" + str(int(self.pd))
+        minWallThickness = self.cur.fetchall()
+        self.cur.execute(
+            "SELECT mold_diameter FROM diameter WHERE pipe_diameter=" + str(int(self.pd))
         )
-        newPd = self.limitsCur.fetchall()
+        newPd = self.cur.fetchall()
         try:
             newPd = newPd[0]
         except:
@@ -3172,11 +3135,9 @@ class main(ctk.CTk):
             )
             self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
             return
-            self.pd = [0]
-        print(newPd[0])
+
         self.pd = float(newPd[0])
-        print(self.pd)
-        print(minWallThickness)
+
         try:
             minWallThickness = minWallThickness[0]
         except:
@@ -3185,10 +3146,9 @@ class main(ctk.CTk):
             )
             self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
             return
-            minWallThickness = [0]
-        print(minWallThickness)
+
         minWallThickness = float(minWallThickness[0])
-        print(minWallThickness)
+
         while minWallThickness > float(self.WallThicknessEntry.get()):
             self.WallThicknessEntry.configure(
                 fg_color=("#e08288", "#6e4441"), border_color="#f51505"
@@ -3218,7 +3178,6 @@ class main(ctk.CTk):
             float(self.PPFilmThicknessEntry.get()) * float(100 - self.shrinkage) / 100.0
         )
 
-        required_Sn = [2, 4, 6, 8, 12, 16]
         Y1 = self.s1 / 2.0
         Y2 = self.s1 + self.s4 + 0.9 * self.ppd / 2.0
         A1 = self.s1 * self.p
@@ -3237,6 +3196,89 @@ class main(ctk.CTk):
         J = (J1 + A1 * Y11**2 + J2 + A2 * Y21**2) / self.p
         self.Sn = 1000.0 * J * self.elastic_modulus / self.pd**3
 
+        self.SnLabel.configure(text="Stiffness: " + str(round(self.Sn, 2)) + " kN/m2")
+        self.SnL.configure(text=self.SnLabel.cget("text"))
+
+        self.SnL.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.SnLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+    def calcPRW(self):
+        self.resError.configure(text="")
+        self.resError.grid_forget()
+        self.density = float(self.densityEntry.get())
+        self.elastic_modulus = float(self.elasticEntry.get())
+        self.shrinkage = float(self.shrinkageEntry.get())
+
+        self.pipe_length = float(self.pipeLengthEnry.get())
+        self.pd = float(self.pipeDiameterEnry.get())
+        self.p = float(self.pitchEntry.get()) - float(self.pitchFactorEntry.get())
+        self.finalPitchEntry.configure(state="normal")
+        self.finalPitchEntry.delete(0, ctk.END)
+        self.finalPitchEntry.insert(0, str(self.p))
+        self.finalPitchEntry.configure(
+            state="disabled",
+            fg_color=("#bababa", "#262626"),
+        )
+        self.cur.execute(
+            "SELECT min_wall_thickness FROM diameter WHERE pipe_diameter="
+            + str(int(self.pd))
+        )
+        minWallThickness = self.cur.fetchall()
+        self.cur.execute(
+            "SELECT mold_diameter FROM diameter WHERE pipe_diameter=" + str(int(self.pd))
+        )
+        newPd = self.cur.fetchall()
+        try:
+            newPd = newPd[0]
+        except:
+            self.resError.configure(
+                text="error: No data for this pipe diameter in diameter"
+            )
+            self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+            return
+
+        self.pd = float(newPd[0])
+
+        try:
+            minWallThickness = minWallThickness[0]
+        except:
+            self.resError.configure(
+                text="error: No data for this pipe diameter in  wall thickness"
+            )
+            self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+            return
+
+        minWallThickness = float(minWallThickness[0])
+
+        while minWallThickness > float(self.WallThicknessEntry.get()):
+            self.WallThicknessEntry.configure(
+                fg_color=("#e08288", "#6e4441"), border_color="#f51505"
+            )
+
+            self.WallThicknessEntry.insert(
+                0,
+                self.Error(
+                    self.productionFrame,
+                    self.WallThicknessEntry,
+                    "Wall thickness",
+                    "at least",
+                    str(minWallThickness),
+                ),
+            )
+        self.productionError.configure(text="")
+
+        self.WallThicknessEntry.configure(
+            fg_color=("#bababa", "#262626"), border_color=("#999EA3", "grey30")
+        )
+
+        self.s1 = (
+            float(self.WallThicknessEntry.get()) * float(100 - self.shrinkage) / 100.0
+        )
+        self.ppd = float(self.PPDiameterEntry.get())
+        self.s4 = (
+            float(self.PPFilmThicknessEntry.get()) * float(100 - self.shrinkage) / 100.0
+        )
+
         # Equations for Pipe Weight
         V1 = self.pd * math.pi * 20.0 * 150.0
         V2 = self.pd * math.pi * 20.0 * 150.0
@@ -3253,14 +3295,13 @@ class main(ctk.CTk):
         self.W3 = V3 * self.density / 1000000.0
         self.W4 = V4 * self.density / 1000000.0
         W = W1 + W2 + self.W3 + self.W4
-        self.limitsCur.execute(
-            "SELECT weight FROM ppwt WHERE pp_weight=" + str(int(self.ppd))
+        self.cur.execute(
+            "SELECT weight FROM ppwt WHERE pp_diameter=" + str(int(self.ppd))
         )
-        tempWk = self.limitsCur.fetchall()
+        tempWk = self.cur.fetchall()
         try:
             tempWk = tempWk[0]
         except:
-            print("error: No data for this pp weight in ppwt")
             tempWk = [0]
         tempWk = float(tempWk[0])
         Wk = tempWk / 1000.0
@@ -3268,8 +3309,6 @@ class main(ctk.CTk):
         Wz = W1 + W2 + self.W3 + self.W4 + Wp
         self.W0 = Wz - W2 / 2.0
         self.pp_dist = self.p - self.ppd - self.s4 * 2.0
-
-        print("pp_dist", self.pp_dist)
 
         if self.pp_dist < 20:
             self.pp_dist = 20
@@ -3281,7 +3320,6 @@ class main(ctk.CTk):
         self.resError.configure(text="")
         self.resError.grid_forget()
 
-        self.SnLabel.configure(text="Stiffness: " + str(round(self.Sn, 2)) + " kN/m2")
         self.W1Label.configure(
             text="Socket pipe body weight: " + str(round(W1, 2)) + " kg"
         )
@@ -3336,14 +3374,10 @@ class main(ctk.CTk):
             + "m"
         )
 
-        self.SnL.configure(text=self.SnLabel.cget("text"))
         self.W0L.configure(text=self.W0Label.cget("text"))
-
-        self.SnL.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         self.W0L.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         self.moreB.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 
-        self.SnLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         self.W1Label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         self.W2Label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
         self.W3Label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
@@ -3354,16 +3388,32 @@ class main(ctk.CTk):
         self.WzLabel.grid(row=3, column=2, padx=10, pady=5, sticky="w")
         self.W0Label.grid(row=4, column=2, padx=10, pady=5, sticky="w")
 
+    def calculatePR(self):
+        self.calcPRSn()
+        self.calcPRW()
+
     def setResize(self, flag):
         self.resizable(flag, flag)
 
-    def edit(self, File=str, table=str, create=False, row=-1, id=-1):
-        from edit import Edit
+    def edit(self, table=str, create=False, row=-1, id=-1):
+        try:
+            if self.editW.state() == "normal":
+                try:
+                    self.editW.destroy()
+                    self.editW = Edit(table, create, row, id, self)
+                except:
+                    pass
+                return
+            else:
+                self.refresh(table, None)
+        except:
+            pass
 
-        edit = Edit(File, table, create, row, id, self)
-        self.refresh(table, File, None)
+        self.editW = Edit(table, create, row, id, self)
 
-    def delete(self, file, table, row):
+        self.refresh(table, None)
+
+    def delete(self, table, row):
         dialog = ctk.CTkInputDialog(
             text='Type "DELETE" to delete this row:', title="Delete"
         )
@@ -3374,24 +3424,15 @@ class main(ctk.CTk):
             + str(int((self.winfo_screenheight() - 200) / 2))
         )
         if dialog.get_input() == "DELETE":
-            if file == "limits" or file == "limits.db":
-                self.limitsCur.execute("DELETE FROM " + table + " WHERE id=" + str(row))
-                self.limitsConn.commit()
-            else:
-                self.profilesCur.limitsCur.execute(
-                    "DELETE FROM " + table + " WHERE id=" + str(row)
-                )
-                self.profilesConn.limitsConn.commit()
+            self.cur.execute("DELETE FROM " + table + " WHERE id=" + str(row))
+            self.conn.commit()
             self.select_frame_by_name(table)
 
-    def refresh(self, table, file, event):
+    def refresh(self, table, event):
         self.Frame.grid_forget()
         self.Frame.destroy()
-        if file == "limits" or file == "limits.db":
-            cur = self.limitsCur
-        else:
-            cur = self.profilesCur
-        cur.execute("SELECT * FROM " + table)
+        
+        self.cur.execute("SELECT * FROM " + table)
         # self.Frame.destroy()
         # self.Frame.grid
         self.Frame = ctk.CTkScrollableFrame(
@@ -3404,8 +3445,8 @@ class main(ctk.CTk):
         self.Frame.grid_columnconfigure(0, weight=1)
         self.Frame.grid_columnconfigure(1, weight=1)
 
-        self.Headers = [description[0] for description in cur.description[1::]]
-        self.RowsData = cur.fetchall()
+        self.Headers = [description[0] for description in self.cur.description[1::]]
+        self.RowsData = self.cur.fetchall()
         self.NumRows = len(self.RowsData)
         self.Entries = []
 
@@ -3413,7 +3454,7 @@ class main(ctk.CTk):
             create = ctk.CTkButton(
                 self.Frame,
                 text="Add",
-                command=lambda: self.edit(file, table, True, -1, -1),
+                command=lambda: self.edit(table, True, -1, -1),
                 width=15,
                 fg_color="#5696b0",
                 # fg_color="transparent",
@@ -3428,8 +3469,7 @@ class main(ctk.CTk):
                 edit = ctk.CTkButton(
                     self.Frame,
                     text="",
-                    command=lambda row=row, temp=row_data[0]: self.edit(
-                        file, table, False, row, int(temp)
+                    command=lambda row=row, temp=row_data[0]: self.edit(table, False, row, int(temp)
                     ),
                     width=15,
                     height=15,
@@ -3446,8 +3486,7 @@ class main(ctk.CTk):
                 delete = ctk.CTkButton(
                     self.Frame,
                     text="",
-                    command=lambda temp=row_data[0]: self.delete(
-                        file, table, int(temp)
+                    command=lambda temp=row_data[0]: self.delete(table, int(temp)
                     ),
                     width=15,
                     height=15,
@@ -3465,7 +3504,8 @@ class main(ctk.CTk):
                 )
                 for col, value in enumerate(row_data[1::]):
                     entry = ctk.CTkEntry(self.Frame, width=100, state="normal")
-                    entry.insert(ctk.END, value)
+                    if value is not None:
+                        entry.insert(ctk.END, value)
                     entry.configure(
                         state="disabled",
                         fg_color=("#bababa", "#262626"),

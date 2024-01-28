@@ -4,9 +4,10 @@ from PIL import Image
 
 
 class Edit(ctk.CTkToplevel):
-    def __init__(self, file=str, table=str, create=False, row=-1, id=-1, parent=any):
+    def __init__(self, table=str, create=False, row=-1, id=-1, parent=any):
         super().__init__()
-        self.file = str(file)
+
+        self.focus()
         self.table = str(table)
         self.create = create
         self.Headers = []
@@ -17,17 +18,20 @@ class Edit(ctk.CTkToplevel):
         self.parent = parent
         self.id = id
 
+        self.parent.wins = 1
+
         self.geometry(
             "600x400+"
             + str(int((self.winfo_screenwidth() - 600) / 2))
             + "+"
             + str(int((self.winfo_screenheight() - 400) / 2)),
         )
-
-        if "db" not in self.file:
-            self.conn = sqlite3.connect(self.file + ".db")
+        if self.create:
+            self.title("Create")
         else:
-            self.conn = sqlite3.connect(self.file.split(".db")[0] + ".db")
+            self.title("Edit")
+
+        self.conn = sqlite3.connect("profiles.db")
         self.cur = self.conn.cursor()
 
         self.Frame = ctk.CTkScrollableFrame(
@@ -44,25 +48,36 @@ class Edit(ctk.CTkToplevel):
         )
         save.grid(pady=5, row=1, column=1)
 
-        self.refresh(self.table, self.file, None)
+        self.refresh(self.table, None)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.Frame.grid(row=0, column=0, columnspan=3, sticky="nsew", pady=10, padx=10)
 
-        self.bind("<Quit>", self.__del__)
+        # self.bind("<destroy>", self.__del__)
+        self.protocol("WM_DELETE_WINDOW", self.__del__)
         self.bind("<Return>", self.save)
+        self.focus_force()
 
     def __del__(self, event=None):
-        print("deleting")
         self.parent.Frame.grid_forget()
-        self.parent.refresh(self.table, self.file, None)
+        self.parent.refresh(self.table, None)
         self.parent.Frame.grid(row=0, column=1, sticky="nsew")
         self.destroy()
 
     def save(self):
         data = []
-        for entry in self.Entries:
+        temp = 0
+        for i, entry in enumerate(self.Entries):
+            if entry.get() == "" and self.nullity[i + 1][1] == 1:
+                entry.configure(fg_color=("#e08288", "#6e4441"), border_color="#f51505")
+                temp = temp + 1
+            else:
+                entry.configure(
+                    fg_color=("white", "grey20"), border_color=("#999EA3", "grey30")
+                )
             data.append(entry.get())
+        if temp > 0:
+            return
         data = tuple(data)
         if self.create:
             self.cur.execute(
@@ -96,19 +111,19 @@ class Edit(ctk.CTkToplevel):
         self.conn.commit()
 
         self.parent.Frame.grid_forget()
-        self.parent.refresh(self.table, self.file, None)
+        self.parent.refresh(self.table, None)
         self.parent.Frame.grid(row=0, column=1, sticky="nsew")
+        self.parent.wins = 0
         self.destroy()
 
     def getEntries(self):
         return self.Entries
 
-    def refresh(self, table, file, event):
-        print("refreshing")
+    def refresh(self, table, event):
         try:
             self.cur.execute("SELECT * FROM " + table)
         except:
-            self.conn = sqlite3.connect(file)
+            self.conn = sqlite3.connect("profiles.db")
             self.cur = self.conn.cursor()
             self.cur.execute("SELECT * FROM " + table)
         self.Frame.destroy()
@@ -128,6 +143,11 @@ class Edit(ctk.CTkToplevel):
         self.Headers = [description[0] for description in self.cur.description[1::]]
         self.RowsData = self.cur.fetchall()
         self.NumRows = len(self.RowsData)
+        self.cur.execute("PRAGMA table_info(" + table + ");")
+        temp = self.cur.fetchall()
+        self.nullity = []
+        for tup in temp:
+            self.nullity.append((tup[1], tup[3]))
 
         flag = False
 
@@ -136,10 +156,7 @@ class Edit(ctk.CTkToplevel):
         #         self.label = ctk.CTkLabel(self.Frame, text=header)
         #         self.label.grid(row=0, column=col, padx=10, pady=5)
 
-        print(self.Headers)
-        print(self.create)
         if self.create and len(self.RowsData) <= 0:
-            print(self.Headers)
             for col, header in enumerate(self.Headers):
                 self.label = ctk.CTkLabel(self.Frame, text=header)
                 self.label.grid(
@@ -176,6 +193,10 @@ class Edit(ctk.CTkToplevel):
                                 pady=5,
                             )
                             self.Entries.append(entry)
+                            if self.nullity[col + 1][1] == 1:
+                                self.label.configure(
+                                    text=self.label.cget("text")[0:-2] + "*:"
+                                )
                             flag = True
 
                         elif row == self.row:
@@ -186,7 +207,12 @@ class Edit(ctk.CTkToplevel):
                                 row=int(col / 2), column=(col % 2) * 2, padx=10, pady=5
                             )
                             entry = ctk.CTkEntry(self.Frame, width=100, state="normal")
-                            entry.insert(ctk.END, value)
+                            if self.nullity[col + 1][1] == 1:
+                                self.label.configure(
+                                    text=self.label.cget("text")[0:-2] + "*:"
+                                )
+                                entry.insert(ctk.END, value)
+
                             entry.grid(
                                 row=int(col / 2),
                                 column=(col % 2) * 2 + 1,
@@ -194,7 +220,3 @@ class Edit(ctk.CTkToplevel):
                                 pady=5,
                             )
                             self.Entries.append(entry)
-
-
-# edit = Edit("profiles.db", "rawMaterial", True, 2, None)
-# edit.mainloop()

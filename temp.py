@@ -1,7 +1,24 @@
 import sqlite3
 
-conn = sqlite3.connect("limits.db")
+conn = sqlite3.connect("profiles.db")
 cur = conn.cursor()
+
+# cur.execute(
+#     """CREATE TABLE IF NOT EXISTS diameter (
+#                 id INTEGER PRIMARY KEY,
+#                 pipe_diameter REAL NOT NULL,
+#                 min_wall_thickness REAL NOT NULL,
+#                 mold_diameter REAL NOT NULL,
+#                 mold_optimal_temperature REAL);"""
+# )
+
+# cur.execute(
+#     """CREATE TABLE IF NOT EXISTS ppwt (
+#                                         id integer PRIMARY KEY,
+#                                         pp_diameter REAL NOT NULL,
+#                                         weight REAL NOT NULL
+#                                     );"""
+# )
 
 
 # ppwt = {27:[90],
@@ -27,7 +44,7 @@ cur = conn.cursor()
 
 # for p in ppwt:
 #     for w in ppwt[p]:
-#         cur.execute('INSERT INTO ppwt (pp_weight, weight) VALUES (?, ?)', (p, w))
+#         cur.execute('INSERT INTO ppwt (pp_diameter, weight) VALUES (?, ?)', (p, w))
 
 
 # moldDiameter = {
@@ -47,5 +64,27 @@ cur = conn.cursor()
 #         )
 
 
+# pipe_diameter	mold_diameter	min_wall_thickness	mold_optimal_temprature
+# diameter = [(600,611.15,3.5, None),
+# (700, 710.47, 4, None),
+# (800, 813.60, 4.5, 150),
+# (1000, 1015.41, 5, 150),
+# (1200, 1218.49, 5, 160),
+# (1600, 1625.93, 5.5, None),
+# (2000, 2027.63, 6, 170)]
 
-conn.commit()
+# for d in diameter:
+#     cur.execute(
+#         "INSERT INTO diameter (pipe_diameter, mold_diameter, min_wall_thickness, mold_optimal_temperature) VALUES (?, ?, ?, ?)",
+#         d,
+# )
+
+
+# conn.commit()
+
+cur.execute("PRAGMA table_info(diameter);")
+temp = cur.fetchall()
+all = []
+for tup in temp:
+    all.append((tup[1], tup[3]))
+print(all)
