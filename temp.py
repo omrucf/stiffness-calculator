@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("profiles.db")
+conn = sqlite3.connect("data.db")
 cur = conn.cursor()
 
 # cur.execute(
@@ -80,11 +80,12 @@ cur = conn.cursor()
 # )
 
 
-# conn.commit()
 
-cur.execute("PRAGMA table_info(diameter);")
+cur.execute("""ALTER TABLE claddingDie 
+RENAME COLUMN ppd TO pp_diameter;""")
+conn.commit()
 temp = cur.fetchall()
-all = []
-for tup in temp:
-    all.append((tup[1], tup[3]))
-print(all)
+# all = []
+# for tup in temp:
+#     all.append((tup[1], tup[3]))
+print(temp)

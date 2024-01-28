@@ -68,7 +68,7 @@ class main(ctk.CTk):
             """ CREATE TABLE IF NOT EXISTS claddingDie (
                                         id INTEGER PRIMARY KEY,
                                         profile TEXT NOT NULL,
-                                        ppd REAL NOT NULL,
+                                        pp_diameter REAL NOT NULL,
                                         pp_thickness REAL NOT NULL
                                     ); """
         )
@@ -1500,7 +1500,7 @@ class main(ctk.CTk):
         self.PPDiameterEntry.configure(state="normal")
         self.PPFilmThicknessEntry.configure(state="normal")
         ppd = self.cur.execute(
-            "SELECT ppd FROM claddingDie WHERE profile=?", (die,)
+            "SELECT pp_diameter FROM claddingDie WHERE profile=?", (die,)
         ).fetchone()[0]
         ppfilmthickness = self.cur.execute(
             "SELECT pp_thickness FROM claddingDie WHERE profile=?", (die,)
