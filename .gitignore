@@ -3,3 +3,5 @@ dist
 .DS_Store
 .vscode
 __pycache__
+ls.py
+temp.py

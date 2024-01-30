@@ -4,6 +4,9 @@ import sqlite3
 from PIL import Image
 from edit import Edit
 
+# from ls import loading_page as ls
+# import threading
+
 
 class main(ctk.CTk):
     ctk.set_appearance_mode("light")
@@ -30,21 +33,21 @@ class main(ctk.CTk):
         self.conn = sqlite3.connect("data.db")
         self.cur = self.conn.cursor()
         self.cur.execute(
-    """CREATE TABLE IF NOT EXISTS diameter (
+            """CREATE TABLE IF NOT EXISTS diameter (
                 id INTEGER PRIMARY KEY,
                 pipe_diameter REAL NOT NULL,
                 min_wall_thickness REAL NOT NULL,
                 mold_diameter REAL NOT NULL, 
                 mold_optimal_temperature REAL);"""
-)
+        )
 
         self.cur.execute(
-    """CREATE TABLE IF NOT EXISTS ppwt (
+            """CREATE TABLE IF NOT EXISTS ppwt (
                                         id integer PRIMARY KEY,
                                         pp_diameter REAL NOT NULL,
                                         weight REAL NOT NULL
                                     );"""
-)
+        )
 
         self.cur.execute(
             """ CREATE TABLE IF NOT EXISTS rawMaterial (
@@ -270,6 +273,23 @@ class main(ctk.CTk):
             padx=5, pady=10, sticky="n", row=4, column=1, columnspan=2, rowspan=2
         )
 
+        self.ls = ctk.CTkFrame(
+            self.resultsFrame, bg_color="transparent", fg_color="transparent"
+        )
+        self.loading_label = ctk.CTkLabel(
+            self.ls,
+            text="Optimizing...",
+            font=("Arial", 14),
+            bg_color="transparent",
+            fg_color="transparent",
+        )
+
+        self.loading_label.grid(
+            row=0,
+            column=0,
+            rowspan=2,
+        )
+
         self.modeFrame = ctk.CTkFrame(
             self.rawMaterialFrame,
             width=self.W * (1 - 0.72222),
@@ -402,6 +422,12 @@ class main(ctk.CTk):
         self.W0L = ctk.CTkLabel(
             self.resultsFrame,
         )
+        self.WC = ctk.CTkLabel(
+            self.resultsFrame,
+        )
+        self.WP = ctk.CTkLabel(
+            self.resultsFrame,
+        )
         self.rawMaterilaLabel = ctk.CTkLabel(
             self.rawMaterialFrame,
             text="Raw Material:",
@@ -442,7 +468,7 @@ class main(ctk.CTk):
         )
         self.densityUnitLabel = ctk.CTkLabel(
             self.rawMaterialFrame,
-            text="(g/cm3)",
+            text="(g/cm³)",
             fg_color="transparent",
         )
         self.densityEntry.grid_forget()
@@ -568,7 +594,6 @@ class main(ctk.CTk):
         )
         self.pitchEntry.grid_forget()
 
-        self.pitchEntry.bind("<FocusOut>", command=self.calcPitch)
         self.pitchEntry.bind("<Return>", command=self.calcPitch)
 
         self.pitchFactorLabel = ctk.CTkLabel(
@@ -583,7 +608,6 @@ class main(ctk.CTk):
         )
         self.pitchFactorEntry.grid_forget()
 
-        self.pitchFactorEntry.bind("<FocusOut>", command=self.calcPitch)
         self.pitchFactorEntry.bind("<Return>", command=self.calcPitch)
 
         self.finalPitchLabel = ctk.CTkLabel(
@@ -659,8 +683,6 @@ class main(ctk.CTk):
         #
 
         #
-
-
 
         self.MachineTabs = ctk.CTkTabview(
             self.calcFrame,
@@ -764,7 +786,7 @@ class main(ctk.CTk):
         )
         self.MoldSpeedEntry.delete(0, ctk.END)
         self.MoldSpeedEntry.insert(0, "3850")
-        self.MoldSpeedEntry.bind("<FocusOut>", command=self.calcSpeeds)
+
         self.MoldSpeedEntry.bind("<Return>", command=self.calcSpeeds)
         self.ppSpeedFractionLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Machine"),
@@ -780,7 +802,7 @@ class main(ctk.CTk):
         )
         self.ppSpeedFractionEntry.delete(0, ctk.END)
         self.ppSpeedFractionEntry.insert(0, "95")
-        self.ppSpeedFractionEntry.bind("<FocusOut>", command=self.calcSpeeds)
+
         self.ppSpeedFractionEntry.bind("<Return>", command=self.calcSpeeds)
         self.ppSpeedLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Machine"), fg_color="transparent", text="PP Speed"
@@ -827,7 +849,7 @@ class main(ctk.CTk):
         )
         self.FlatExtruder75Entry.delete(0, ctk.END)
         self.FlatExtruder75Entry.insert(0, "83")
-        self.FlatExtruder75Entry.bind("<FocusOut>", command=self.f45)
+
         self.FlatExtruder75Entry.bind("<Return>", command=self.f45)
 
         self.FlatExtruder45Label = ctk.CTkLabel(
@@ -863,7 +885,7 @@ class main(ctk.CTk):
         )
         self.CladdingExtruder75Entry.delete(0, ctk.END)
         self.CladdingExtruder75Entry.insert(0, "83")
-        self.CladdingExtruder75Entry.bind("<FocusOut>", command=self.c45)
+
         self.CladdingExtruder75Entry.bind("<Return>", command=self.c45)
 
         self.CladdingExtruder45Label = ctk.CTkLabel(
@@ -980,7 +1002,7 @@ class main(ctk.CTk):
         self.CarriageRotationsLabel = ctk.CTkLabel(
             self.MachineTabs.tab("Trolley Position"),
             fg_color="transparent",
-            text="Carriage Rotations",
+            text="Mold Rotations",
         )
         self.CarriageRotationsEntry = ctk.CTkEntry(
             self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
@@ -1036,12 +1058,12 @@ class main(ctk.CTk):
             self.MachineTabs.tab("Trolley Position"), placeholder_text="", width=70
         )
         self.pitchAngleLabel = ctk.CTkLabel(
-            self.MachineTabs.tab("Trolley Position"),
+            self.MachineTabs.tab("Machine"),
             fg_color="transparent",
             text="Pitch Angle \n(°)",
         )
         self.pitchAngleEntry = ctk.CTkEntry(
-            self.MachineTabs.tab("Trolley Position"),
+            self.MachineTabs.tab("Machine"),
             placeholder_text="",
             width=70,
             state="disabled",
@@ -1186,7 +1208,7 @@ class main(ctk.CTk):
         self.optimizeButton = ctk.CTkButton(
             self.productionFrame,
             text="optimize",
-            command=self.optimizedPR,
+            command=self.opWLs,
             width=165,
             fg_color="#5696b0",
         )
@@ -1265,13 +1287,13 @@ class main(ctk.CTk):
         else:
             self.calcFrame.grid_forget()
         if name == "ppwt":
-            self.refresh("ppwt",  None)
+            self.refresh("ppwt", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "diameter":
             self.refresh("diameter", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "moldDiameter":
-            self.refresh("moldDiameter",  None)
+            self.refresh("moldDiameter", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
         elif name == "rawMaterial":
             self.refresh("rawMaterial", None)
@@ -1484,11 +1506,9 @@ class main(ctk.CTk):
         self.calcPitch("")
         self.pitchEntry.configure(
             state="disabled",
-
         )
         self.WallThicknessEntry.configure(
             state="disabled",
-
         )
 
     # create same function as dieCommand but use ppd and ppfilmthickness ppwtEntries
@@ -1517,11 +1537,9 @@ class main(ctk.CTk):
         )
         self.PPDiameterEntry.configure(
             state="disabled",
-
         )
         self.PPFilmThicknessEntry.configure(
             state="disabled",
-
         )
 
     def moreF(self):
@@ -1578,6 +1596,8 @@ class main(ctk.CTk):
         self.resError.grid_forget()
         self.SnL.grid_forget()
         self.W0L.grid_forget()
+        self.WC.grid_forget()
+        self.WP.grid_forget()
         self.moreB.grid_forget()
         self.moreB.configure(text="more details")
         self.moreFrame.grid_forget()
@@ -1946,21 +1966,21 @@ class main(ctk.CTk):
                 state="disabled",
                 fg_color=("#bababa", "#262626"),
             )
-            self.FlatExtruder75Entry.bind("<FocusOut>", self.calcSpeeds)
+
             self.FlatExtruder75Entry.bind("<Return>", self.calcSpeeds)
-            self.flat75MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+
             self.flat75MaxEntry.bind("<Return>", self.calcSpeeds)
-            self.FlatExtruder45Entry.bind("<FocusOut>", self.calcSpeeds)
+
             self.FlatExtruder45Entry.bind("<Return>", self.calcSpeeds)
-            self.flat45MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+
             self.flat45MaxEntry.bind("<Return>", self.calcSpeeds)
-            self.CladdingExtruder75Entry.bind("<FocusOut>", self.calcSpeeds)
+
             self.CladdingExtruder75Entry.bind("<Return>", self.calcSpeeds)
-            self.cladding75MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+
             self.cladding75MaxEntry.bind("<Return>", self.calcSpeeds)
-            self.CladdingExtruder45Entry.bind("<FocusOut>", self.calcSpeeds)
+
             self.CladdingExtruder45Entry.bind("<Return>", self.calcSpeeds)
-            self.cladding45MaxEntry.bind("<FocusOut>", self.calcSpeeds)
+
             self.cladding45MaxEntry.bind("<Return>", self.calcSpeeds)
             if (
                 flatExtruder75
@@ -2062,6 +2082,9 @@ class main(ctk.CTk):
         except ValueError:
             return False
 
+    def CS(self, entry, event):
+        entry.bind("<FocusOut", self.unb)
+
     def calculate(self):
         self.SnLabel.configure(text="")
         self.W1Label.configure(text="")
@@ -2075,6 +2098,8 @@ class main(ctk.CTk):
         self.W0Label.configure(text="")
         self.SnL.configure(text="")
         self.W0L.configure(text="")
+        self.WC.configure(text="")
+        self.WP.configure(text="")
         self.resError.configure(text="")
         self.resError.grid_forget()
         self.moreB.grid_forget()
@@ -2290,8 +2315,8 @@ class main(ctk.CTk):
             pady=5,
         )
         self.pitchAngleLabel.grid(
-            row=1,
-            column=8,
+            row=2,
+            column=0,
             padx=10,
             pady=5,
         )
@@ -2347,7 +2372,7 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.CarriageRotationsEntry.bind("<FocusOut>", self.calcSpeeds)
+
         self.CarriageRotationsEntry.bind("<Return>", self.calcSpeeds)
         self.CarriageReturnDelayEntry.grid(
             row=0,
@@ -2361,7 +2386,7 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.PPStartEntry.bind("<FocusOut>", self.calcPPExSt)
+
         self.PPStartEntry.bind("<Return>", self.calcPPExSt)
         self.PPStartEntry.delete(0, ctk.END)
         self.PPStartEntry.insert(0, "680")
@@ -2390,7 +2415,7 @@ class main(ctk.CTk):
         self.pitchAngleEntry.configure(state="normal")
         self.pitchAngleEntry.delete(0, ctk.END)
         self.pitchAngleEntry.insert(0, str(round(temp, 2)))
-        self.pitchAngleEntry.grid(row=1, column=9, padx=10, pady=5)
+        self.pitchAngleEntry.grid(row=2, column=1, padx=10, pady=5)
         self.pitchAngleEntry.configure(state="disabled")
         self.trolleyRotataionsEntry.grid(
             row=2,
@@ -2400,7 +2425,7 @@ class main(ctk.CTk):
         )
         self.trolleyRotataionsEntry.delete(0, ctk.END)
         self.trolleyRotataionsEntry.insert(0, "1")
-        self.trolleyRotataionsEntry.bind("<FocusOut>", self.calcSpeeds)
+
         self.trolleyRotataionsEntry.bind("<Return>", self.calcSpeeds)
         self.trolleyIncreaseTimeEntry.grid(
             row=2,
@@ -2408,7 +2433,7 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.trolleyIncreaseTimeEntry.bind("<FocusOut>", self.calcTrolley)
+
         self.trolleyIncreaseTimeEntry.bind("<Return>", self.calcTrolley)
         self.ppExtruderStartEntry.grid(
             row=2,
@@ -2476,7 +2501,8 @@ class main(ctk.CTk):
         )
         minWallThickness = self.cur.fetchall()
         self.cur.execute(
-            "SELECT mold_diameter FROM diameter WHERE pipe_diameter=" + str(int(self.pd))
+            "SELECT mold_diameter FROM diameter WHERE pipe_diameter="
+            + str(int(self.pd))
         )
         newPd = self.cur.fetchall()
         try:
@@ -2587,7 +2613,9 @@ class main(ctk.CTk):
         self.W0L.configure(text=self.W0Label.cget("text"))
 
         self.SnL.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        self.W0L.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+        self.W0L.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.WC.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+        self.WP.grid(row=1, column=1, padx=10, pady=5, sticky="w")
         self.moreB.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 
         self.SnLabel.grid(row=0, column=0, padx=10, pady=5, sticky="w")
@@ -2597,7 +2625,54 @@ class main(ctk.CTk):
         self.WLabel.grid(row=1, column=2, padx=10, pady=5, sticky="w")
         self.W0Label.grid(row=2, column=2, padx=10, pady=5, sticky="w")
 
-    def optimizedPR(self):
+    def opWLs(self):
+        # t1 = threading.Thread(target=self.startls, args=(10,))
+        # t2 = threading.Thread(target=self.optimizedPR, args=(10,))
+
+        # t1.start()
+        # t2.start()
+
+        # t1.join()
+        # t2.join()
+        self.resError.grid_forget()
+        self.SnL.grid_forget()
+        self.W0L.grid_forget()
+        self.WC.grid_forget()
+        self.WP.grid_forget()
+        self.moreB.grid_forget()
+        self.moreB.configure(text="more details")
+        self.moreFrame.grid_forget()
+        self.startls()
+
+    def startls(self, event=None):
+        # try:
+        #     if self.lp.root.state() == "normal":
+        #         try:
+        #             self.lp.root.destroy()
+
+        #             # self.lp = ls()
+        #             # self.lp.root.mainloop()
+        #             # self.lp.root.focus_force()
+        #         except:
+        #             pass
+        #         return
+
+        # except:
+        #     pass
+
+        self.ls.grid(
+            row=0,
+            column=1,
+            columnspan=5,
+            rowspan=5,
+        )
+        self.after(200, self.optimizedPR)
+
+        # self.lp = ls()
+        # self.lp.root.mainloop()
+        # self.lp.root.focus_force()
+
+    def optimizedPR(self, event=None):
         self.SnLabel.configure(text="")
         self.W1Label.configure(text="")
         self.W2Label.configure(text="")
@@ -2779,9 +2854,7 @@ class main(ctk.CTk):
         flatDies = self.cur.execute(
             "SELECT profile FROM flatDie WHERE thickness >=" + str(minWallThickness)
         ).fetchall()
-        claddingDies = self.cur.execute(
-            "SELECT profile FROM claddingDie"
-        ).fetchall()
+        claddingDies = self.cur.execute("SELECT profile FROM claddingDie").fetchall()
         for i in range(len(flatDies)):
             flatDies[i] = flatDies[i][0]
         for i in range(len(claddingDies)):
@@ -2830,9 +2903,14 @@ class main(ctk.CTk):
             self.W0Label.configure(text="")
             self.SnL.configure(text="")
             self.W0L.configure(text="")
+            self.WC.configure(text="")
+            self.WP.configure(text="")
+
+            self.ls.grid_forget()
 
             self.resError.configure(text="Can't be optimized")
             self.resError.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
             return
         self.resError.configure(text="")
         self.resError.grid_forget()
@@ -2951,8 +3029,8 @@ class main(ctk.CTk):
             pady=5,
         )
         self.pitchAngleLabel.grid(
-            row=1,
-            column=8,
+            row=2,
+            column=0,
             padx=10,
             pady=5,
         )
@@ -3008,7 +3086,7 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.CarriageRotationsEntry.bind("<FocusOut>", self.calcSpeeds)
+
         self.CarriageRotationsEntry.bind("<Return>", self.calcSpeeds)
         self.CarriageReturnDelayEntry.grid(
             row=0,
@@ -3022,7 +3100,7 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.PPStartEntry.bind("<FocusOut>", self.calcPPExSt)
+
         self.PPStartEntry.bind("<Return>", self.calcPPExSt)
         self.PPStartEntry.delete(0, ctk.END)
         self.PPStartEntry.insert(0, "680")
@@ -3051,7 +3129,7 @@ class main(ctk.CTk):
         self.pitchAngleEntry.configure(state="normal")
         self.pitchAngleEntry.delete(0, ctk.END)
         self.pitchAngleEntry.insert(0, str(round(temp, 2)))
-        self.pitchAngleEntry.grid(row=1, column=9, padx=10, pady=5)
+        self.pitchAngleEntry.grid(row=2, column=1, padx=10, pady=5)
         self.pitchAngleEntry.configure(state="disabled")
         self.trolleyRotataionsEntry.grid(
             row=2,
@@ -3061,7 +3139,7 @@ class main(ctk.CTk):
         )
         self.trolleyRotataionsEntry.delete(0, ctk.END)
         self.trolleyRotataionsEntry.insert(0, "1")
-        self.trolleyRotataionsEntry.bind("<FocusOut>", self.calcSpeeds)
+
         self.trolleyRotataionsEntry.bind("<Return>", self.calcSpeeds)
         self.trolleyIncreaseTimeEntry.grid(
             row=2,
@@ -3069,7 +3147,7 @@ class main(ctk.CTk):
             padx=10,
             pady=5,
         )
-        self.trolleyIncreaseTimeEntry.bind("<FocusOut>", self.calcTrolley)
+
         self.trolleyIncreaseTimeEntry.bind("<Return>", self.calcTrolley)
         self.ppExtruderStartEntry.grid(
             row=2,
@@ -3087,6 +3165,11 @@ class main(ctk.CTk):
         self.c45(None)
         self.calcSpeeds(None)
         self.calcPPExSt(None)
+        try:
+            self.after(300, self.ls.grid_forget())
+            pass
+        except:
+            pass
 
     def calcTrolley(self, event):
         temp = (self.p * float(self.trolleyIncreaseTimeEntry.get())) / 250
@@ -3124,7 +3207,8 @@ class main(ctk.CTk):
         )
         minWallThickness = self.cur.fetchall()
         self.cur.execute(
-            "SELECT mold_diameter FROM diameter WHERE pipe_diameter=" + str(int(self.pd))
+            "SELECT mold_diameter FROM diameter WHERE pipe_diameter="
+            + str(int(self.pd))
         )
         newPd = self.cur.fetchall()
         try:
@@ -3225,7 +3309,8 @@ class main(ctk.CTk):
         )
         minWallThickness = self.cur.fetchall()
         self.cur.execute(
-            "SELECT mold_diameter FROM diameter WHERE pipe_diameter=" + str(int(self.pd))
+            "SELECT mold_diameter FROM diameter WHERE pipe_diameter="
+            + str(int(self.pd))
         )
         newPd = self.cur.fetchall()
         try:
@@ -3311,7 +3396,6 @@ class main(ctk.CTk):
         self.pp_dist = self.p - self.ppd - self.s4 * 2.0
 
         if self.pp_dist < 20:
-            self.pp_dist = 20
             self.resError.configure(
                 text="pp_dist can't be less than 20",
             )
@@ -3375,7 +3459,29 @@ class main(ctk.CTk):
         )
 
         self.W0L.configure(text=self.W0Label.cget("text"))
-        self.W0L.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+
+        wp = str(self.WpLabel.cget("text")).split(": ")[1]
+        wpt = ""
+        for i in range(len(wp)):
+            if wp[i].isalpha() is False:
+                wpt = wpt + wp[i]
+            else:
+                break
+        w0 = str(self.W0Label.cget("text")).split(": ")[1]
+        w0t = ""
+        for i in range(len(w0)):
+            if w0[i].isalpha() is False:
+                w0t = w0t + w0[i]
+            else:
+                break
+        temp = (float(wpt) / float(w0t)) * 100
+        self.WC.configure(text="pp weight percentage: " + str(round(temp, 2)) + "%")
+        self.WP.configure(text="pe weight percentage: " + str(round(100 - temp, 2)) + "%")
+
+        self.SnL.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.W0L.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.WC.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+        self.WP.grid(row=1, column=1, padx=10, pady=5, sticky="w")
         self.moreB.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 
         self.W1Label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
@@ -3384,6 +3490,7 @@ class main(ctk.CTk):
         self.W4Label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
         self.WLabel.grid(row=0, column=2, padx=10, pady=5, sticky="w")
         self.WkLabel.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+        self.WpLabel.configure(text=self.WpLabel.cget("text") + "(" + str(round(temp,2)) + "%)")
         self.WpLabel.grid(row=2, column=2, padx=10, pady=5, sticky="w")
         self.WzLabel.grid(row=3, column=2, padx=10, pady=5, sticky="w")
         self.W0Label.grid(row=4, column=2, padx=10, pady=5, sticky="w")
@@ -3431,7 +3538,7 @@ class main(ctk.CTk):
     def refresh(self, table, event):
         self.Frame.grid_forget()
         self.Frame.destroy()
-        
+
         self.cur.execute("SELECT * FROM " + table)
         # self.Frame.destroy()
         # self.Frame.grid
@@ -3446,6 +3553,12 @@ class main(ctk.CTk):
         self.Frame.grid_columnconfigure(1, weight=1)
 
         self.Headers = [description[0] for description in self.cur.description[1::]]
+        self.headers = self.Headers.copy()
+        for i in range(len(self.Headers)):
+            if self.headers[i] == "profile":
+                pass
+            else:
+                self.headers[i] = self.headers[i].replace("_", " ")
         self.RowsData = self.cur.fetchall()
         self.NumRows = len(self.RowsData)
         self.Entries = []
@@ -3460,7 +3573,7 @@ class main(ctk.CTk):
                 # fg_color="transparent",
             )
             create.grid(row=0, column=0, padx=10, pady=5)
-            for col, header in enumerate(self.Headers):
+            for col, header in enumerate(self.headers):
                 self.label = ctk.CTkLabel(self.Frame, text=header)
                 self.label.grid(row=0, column=col + 1, padx=10, pady=5)
 
@@ -3469,14 +3582,15 @@ class main(ctk.CTk):
                 edit = ctk.CTkButton(
                     self.Frame,
                     text="",
-                    command=lambda row=row, temp=row_data[0]: self.edit(table, False, row, int(temp)
+                    command=lambda row=row, temp=row_data[0]: self.edit(
+                        table, False, row, int(temp)
                     ),
                     width=15,
                     height=15,
                     image=ctk.CTkImage(
-                        light_image=Image.open("edit.png"),
+                        light_image=Image.open("icons/edit.png"),
                         size=(15, 15),
-                        dark_image=Image.open("editD.png"),
+                        dark_image=Image.open("icons/editD.png"),
                     ),
                     bg_color="transparent",
                     fg_color="transparent",
@@ -3486,14 +3600,13 @@ class main(ctk.CTk):
                 delete = ctk.CTkButton(
                     self.Frame,
                     text="",
-                    command=lambda temp=row_data[0]: self.delete(table, int(temp)
-                    ),
+                    command=lambda temp=row_data[0]: self.delete(table, int(temp)),
                     width=15,
                     height=15,
                     image=ctk.CTkImage(
-                        light_image=Image.open("delete.png"),
+                        light_image=Image.open("icons/delete.png"),
                         size=(15, 15),
-                        dark_image=Image.open("deleteD.png"),
+                        dark_image=Image.open("icons/deleteD.png"),
                     ),
                     bg_color="transparent",
                     fg_color="transparent",

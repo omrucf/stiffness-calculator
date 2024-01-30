@@ -141,6 +141,30 @@ class Edit(ctk.CTkToplevel):
         self.Frame.grid_columnconfigure(1, weight=1)
 
         self.Headers = [description[0] for description in self.cur.description[1::]]
+        self.headers = self.Headers.copy()
+        for i in range(len(self.Headers)):
+            if self.headers[i] == "weight":
+                self.headers[i] = "weight (kg)"
+            elif self.headers[i] == "mold_optimal_temprature":
+                self.headers[i] = "mold_optimal_temprature (°C)"
+            elif self.headers[i] == "density":
+                self.headers[i] = "density (g/cm³)"
+            elif self.headers[i] == "elastic_modulus":
+                self.headers[i] = "elastic_modulus (MPa)"
+            elif self.headers[i] == "shrinkage":
+                self.headers[i] = "shrinkage (%)"
+            elif self.headers[i] == "profile":
+                pass
+            else:
+                self.headers[i] = self.headers[i] + " (mm)"
+                
+        for i in range(len(self.Headers)):
+            if self.headers[i] == "profile":
+                pass
+            else:
+                self.headers[i] = self.headers[i].replace("_", " ")
+
+        print(self.headers)
         self.RowsData = self.cur.fetchall()
         self.NumRows = len(self.RowsData)
         self.cur.execute("PRAGMA table_info(" + table + ");")
@@ -157,7 +181,7 @@ class Edit(ctk.CTkToplevel):
         #         self.label.grid(row=0, column=col, padx=10, pady=5)
 
         if self.create and len(self.RowsData) <= 0:
-            for col, header in enumerate(self.Headers):
+            for col, header in enumerate(self.headers):
                 self.label = ctk.CTkLabel(self.Frame, text=header)
                 self.label.grid(
                     row=int(col / 2),
@@ -180,7 +204,7 @@ class Edit(ctk.CTkToplevel):
                     for col, value in enumerate(row_data[1::]):
                         if self.create and len(self.RowsData) > 0:
                             self.label = ctk.CTkLabel(
-                                self.Frame, text=self.Headers[col] + ": "
+                                self.Frame, text=self.headers[col] + ": "
                             )
                             self.label.grid(
                                 row=int(col / 2), column=(col % 2) * 2, padx=10, pady=5
@@ -201,7 +225,7 @@ class Edit(ctk.CTkToplevel):
 
                         elif row == self.row:
                             self.label = ctk.CTkLabel(
-                                self.Frame, text=self.Headers[col] + ": "
+                                self.Frame, text=self.headers[col] + ": "
                             )
                             self.label.grid(
                                 row=int(col / 2), column=(col % 2) * 2, padx=10, pady=5
