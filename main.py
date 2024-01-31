@@ -27,6 +27,12 @@ class main(ctk.CTk):
         self.calcFrame.grid_columnconfigure(0, weight=1)
         self.calcFrame.grid_columnconfigure(1, weight=1)
 
+        self.sheetFrame = ctk.CTkScrollableFrame(
+            self, corner_radius=0, fg_color="transparent"
+        )
+        # self.sheetFrame.grid_columnconfigure(0, weight=1)
+        # self.sheetFrame.grid_columnconfigure(1, weight=1)
+
         # self.calcFrame.grid(row=0, column=1, sticky="nsew")
 
         # creating databases
@@ -212,6 +218,20 @@ class main(ctk.CTk):
         )
         self.calculatorB.grid(row=10, column=0, pady=5, padx=2)
 
+        self.sheetB = ctk.CTkButton(
+            self.navigation_frame,
+            corner_radius=0,
+            height=40,
+            border_spacing=10,
+            fg_color="transparent",
+            text_color=("gray10", "gray90"),
+            hover_color=("gray70", "gray30"),
+            text="Export Sheet",
+            anchor="w",
+            command=lambda: self.select_frame_by_name("sheet"),
+        )
+        self.sheetB.grid(row=11, column=0, pady=5, padx=2)
+
         #
 
         #
@@ -276,6 +296,9 @@ class main(ctk.CTk):
         self.ls = ctk.CTkFrame(
             self.resultsFrame, bg_color="transparent", fg_color="transparent"
         )
+        self.ls2 = ctk.CTkFrame(
+            self.sheetFrame, bg_color="transparent", fg_color="transparent"
+        )
         self.loading_label = ctk.CTkLabel(
             self.ls,
             text="Optimizing...",
@@ -285,6 +308,20 @@ class main(ctk.CTk):
         )
 
         self.loading_label.grid(
+            row=0,
+            column=0,
+            rowspan=2,
+        )
+        
+        self.loading_label2 = ctk.CTkLabel(
+            self.ls2,
+            text="Optimizing...",
+            font=("Arial", 14),
+            bg_color="transparent",
+            fg_color="transparent",
+        )
+
+        self.loading_label2.grid(
             row=0,
             column=0,
             rowspan=2,
@@ -1231,8 +1268,215 @@ class main(ctk.CTk):
 
         #
         # self.setResize(False)
+        self.manyLabel = ctk.CTkLabel(
+            self.sheetFrame,
+            text="number of required Sns:",
+        )
+
+        self.manyEntry = ctk.CTkEntry(
+            self.sheetFrame,
+        )
+
+        self.reqSnLabel2 = ctk.CTkLabel(
+            self.sheetFrame,
+            text="Required Sns:",
+        )
+
+        self.manyLabel.grid(row=0, column=0, sticky="nw", pady=5)
+        self.manyEntry.grid(row=0, column=1, padx=10, sticky="nw", columnspan=2, pady=5)
+
+        self.entrs = []
+
+        self.button = ctk.CTkButton(
+            self.sheetFrame,
+            text="Generate",
+            command=self.buttonCommand,
+            fg_color="#5696b0",
+        )
+        self.button.grid(row=1, column=1, padx=10, pady=5, columnspan=2, sticky="nw")
+        self.expB = ctk.CTkButton(
+            self.sheetFrame,
+            text="Export",
+            command=self.lsexp,
+            fg_color="#5696b0",
+        )
+        self.expB.grid(
+            row=1,
+            column=3,
+            padx=10,
+            pady=5,
+            columnspan=2,
+        )
+        items = self.cur.execute("SELECT profile FROM rawMaterial").fetchall()
+        items = [item[0] for item in items]
+        self.matP = ctk.CTkOptionMenu(
+            self.sheetFrame,
+            values=list(items),
+            anchor="w",
+            command=self.materialCommand,
+            corner_radius=0,
+            dynamic_resizing=False,
+            fg_color="#4eb56b",
+            button_color="#2b6e3e",
+            button_hover_color="#235731",
+        )
+
+        self.matP.set("Material Profiles")
+
+        self.matP.grid(
+            row=0,
+            column=3,
+            padx=10,
+            pady=5,
+            columnspan=2,
+        )
+
+        self.pFL = ctk.CTkLabel(
+            self.sheetFrame,
+            text="pitch factor: ",
+        )
+        self.pFL.grid(
+            row=0,
+            column=5,
+            padx=10,
+            pady=5,
+            columnspan=2,
+        )
+        self.pFE = ctk.CTkEntry(
+            self.sheetFrame,
+        )
+        self.pFE.grid(
+            row=1,
+            column=5,
+            padx=10,
+            pady=5,
+            columnspan=2,
+        )
+
         self.resizable(False, False)
+        
+        
+    def lsexp(self):
+        self.ls2.grid(
+            row=1,
+            column=0,
+            columnspan=5,
+            rowspan=5,
+        )
+        self.after(200, self.exportF)
         #
+
+    def exportF(self):
+        res = [("Diameter", "Sn", "Flat Die", "Cladding Die", "Weight (kg/6m)")]
+        self.pitchFactorEntry.configure(state="normal")
+        self.pitchFactorEntry.delete(0, ctk.END)
+        self.pitchFactorEntry.insert(0, str(self.pFE.get()))
+
+        self.cur.execute("SELECT * FROM diameter")
+        diameters = self.cur.fetchall()
+
+        self.pipeLengthEnry.delete(0, ctk.END)
+        self.pipeLengthEnry.insert(0, str(6000))
+        tempSns = []
+        for i in range(len(self.entrs)):
+            t = self.entrs[i].get()
+            if t != "" and self.isreal(t):
+                tempSns.append(float(t))
+
+        if len(tempSns) != 0:
+            for d in diameters:
+                self.pipeDiameterEnry.delete(0, ctk.END)
+                self.pipeDiameterEnry.insert(0, str(d[1]))
+                for sn in tempSns:
+                    self.reqSnEntries.delete(0, ctk.END)
+                    self.reqSnEntries.insert(0, str(sn))
+                    self.optimizedPR()
+                    fd = (
+                        str(self.pitchEntry.get()[0:-2])
+                        + "-S"
+                        + str(self.WallThicknessEntry.get()[0:-2])
+                    )
+                    cd = (
+                        str(self.PPDiameterEntry.get()[0:-2])
+                        + "-S"
+                        + str(self.PPFilmThicknessEntry.get()[0:-2])
+                    )
+                    if self.resError.cget("text") != "":
+                        tup = (d[1], float(sn), None, None, None)
+                    else:
+                        tup = (d[1], float(sn), fd, cd, round(self.W0, 2))
+                    res.append(tup)
+
+        print(res[0])
+        for r in res[1:]:
+            print(r)
+        self.pipeLengthEnry.delete(0, ctk.END)
+        self.pipeDiameterEnry.delete(0, ctk.END)
+        self.pitchFactorEntry.delete(0, ctk.END)
+        self.reqSnEntries.delete(0, ctk.END)
+        self.reqSnEntries.insert(0, "8")
+        self.flatDieProfile.set("Flat die profiles")
+        self.claddingDieProfile.set("Cladding die profiles")
+        self.densityEntry.delete(0, ctk.END)
+        self.elasticEntry.delete(0, ctk.END)
+        self.shrinkageEntry.delete(0, ctk.END)
+        
+        self.ls2.grid_forget()
+
+    def buttonCommand(self):
+        if self.manyEntry.get() == "" or self.manyEntry.get().isdigit() == False:
+            self.manyEntry.delete(0, ctk.END)
+            return
+        if int(self.manyEntry.get()) > 2:
+            self.expB.grid(row=1, column=2, padx=10, pady=5, sticky="nw")
+            self.matP.grid(row=0, column=2, padx=10, pady=5, sticky="nw")
+            self.pFE.grid(row=1, column=3, padx=10, pady=5, sticky="nw")
+            self.pFL.grid(row=0, column=3, padx=10, pady=5, sticky="nw")
+        else:
+            self.expB.grid(
+                row=1,
+                column=3,
+                padx=10,
+                pady=5,
+                columnspan=2,
+            )
+            self.matP.grid(
+                row=0,
+                column=3,
+                padx=10,
+                pady=5,
+                columnspan=2,
+            )
+            self.pFE.grid(
+                row=1,
+                column=5,
+                padx=10,
+                pady=5,
+                columnspan=2,
+            )
+            self.pFL.grid(
+                row=0,
+                column=5,
+                padx=10,
+                pady=5,
+                columnspan=2,
+            )
+
+        self.reqSnLabel2.grid(row=2, column=0, sticky="nw")
+
+        for i in range(1, int(self.manyEntry.get()) + 1):
+            self.entrs.append(
+                ctk.CTkEntry(
+                    self.sheetFrame,
+                )
+            )
+            self.entrs[-1].grid(
+                row=int(((i - 1) / 6) + 3),
+                column=(i - 1) % 6,
+                sticky="w",
+                pady=5,
+                padx=5,
+            )
 
     def f45(self, event):
         if self.FlatExtruder75Entry.get() != "":
@@ -1280,12 +1524,19 @@ class main(ctk.CTk):
         self.calculatorB.configure(
             fg_color=("gray75", "gray25") if name == "calculator" else "transparent"
         )
+        self.sheetB.configure(
+            fg_color=("gray75", "gray25") if name == "sheet" else "transparent"
+        )
         self.Frame.grid_forget()
         # show selected frame
         if name == "calculator":
             self.calcFrame.grid(row=0, column=1, sticky="nsew")
         else:
             self.calcFrame.grid_forget()
+        if name == "sheet":
+            self.sheetFrame.grid(row=0, column=1, sticky="nsew")
+        else:
+            self.sheetFrame.grid_forget()
         if name == "ppwt":
             self.refresh("ppwt", None)
             self.Frame.grid(row=0, column=1, sticky="nsew")
@@ -1552,6 +1803,15 @@ class main(ctk.CTk):
 
     def modeCommand(self, mode):
         self.mode = mode
+        # clear all widgets in machine frame and results frame
+        for widget in self.resultsFrame.winfo_children():
+            widget.grid_forget()
+        for widget in self.MachineTabs.tab("Extruder").winfo_children():
+            widget.grid_forget()
+        for widget in self.MachineTabs.tab("Trolley Position").winfo_children():
+            widget.grid_forget()
+        for widget in self.MachineTabs.tab("Machine").winfo_children():
+            widget.grid_forget()
         self.materialprofile.grid_forget()
         self.densityLabel.grid_forget()
         self.densityEntry.grid_forget()
@@ -3476,7 +3736,9 @@ class main(ctk.CTk):
                 break
         temp = (float(wpt) / float(w0t)) * 100
         self.WC.configure(text="pp weight percentage: " + str(round(temp, 2)) + "%")
-        self.WP.configure(text="pe weight percentage: " + str(round(100 - temp, 2)) + "%")
+        self.WP.configure(
+            text="pe weight percentage: " + str(round(100 - temp, 2)) + "%"
+        )
 
         self.SnL.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         self.W0L.grid(row=0, column=1, padx=10, pady=5, sticky="w")
@@ -3490,7 +3752,9 @@ class main(ctk.CTk):
         self.W4Label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
         self.WLabel.grid(row=0, column=2, padx=10, pady=5, sticky="w")
         self.WkLabel.grid(row=1, column=2, padx=10, pady=5, sticky="w")
-        self.WpLabel.configure(text=self.WpLabel.cget("text") + "(" + str(round(temp,2)) + "%)")
+        self.WpLabel.configure(
+            text=self.WpLabel.cget("text") + "(" + str(round(temp, 2)) + "%)"
+        )
         self.WpLabel.grid(row=2, column=2, padx=10, pady=5, sticky="w")
         self.WzLabel.grid(row=3, column=2, padx=10, pady=5, sticky="w")
         self.W0Label.grid(row=4, column=2, padx=10, pady=5, sticky="w")
