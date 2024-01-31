@@ -4,8 +4,48 @@ import sqlite3
 from PIL import Image
 from edit import Edit
 
+import pandas as pd
+import numpy as np
+import time
+
+
+from pandas import ExcelWriter, ExcelFile
+from openpyxl import load_workbook
+from openpyxl.styles import Alignment, Border, Font, Side
+
 # from ls import loading_page as ls
 # import threading
+
+
+class ScrollableCheckBoxFrame(ctk.CTkFrame):
+    def __init__(self, master, item_list, command=None, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.command = command
+        self.checkbox_list = []
+        for i, item in enumerate(item_list):
+            self.add_item(item)
+
+    def add_item(self, item):
+        checkbox = ctk.CTkCheckBox(self, text=item)
+        if self.command is not None:
+            checkbox.configure(command=self.command)
+        checkbox.grid(row=0, column=len(self.checkbox_list), pady=(0, 10))
+        self.checkbox_list.append(checkbox)
+
+    def remove_item(self, item):
+        for checkbox in self.checkbox_list:
+            if item == checkbox.cget("text"):
+                checkbox.destroy()
+                self.checkbox_list.remove(checkbox)
+                return
+
+    def get_checked_items(self):
+        return [
+            checkbox.cget("text")
+            for checkbox in self.checkbox_list
+            if checkbox.get() == 1
+        ]
 
 
 class main(ctk.CTk):
@@ -232,6 +272,20 @@ class main(ctk.CTk):
         )
         self.sheetB.grid(row=11, column=0, pady=5, padx=2)
 
+        self.scrollable_checkbox_frame = ScrollableCheckBoxFrame(
+            master=self.sheetFrame,
+            width=600,
+            height=5,
+            command=self.buttonCommand,
+            item_list=["2", "4", "6.3", "8", "12.5", "16"],
+            bg_color="transparent",
+            fg_color="transparent",
+        )
+
+        self.scrollable_checkbox_frame.grid(
+            row=0, column=1, padx=15, pady=15, columnspan=10
+        )
+
         #
 
         #
@@ -312,7 +366,7 @@ class main(ctk.CTk):
             column=0,
             rowspan=2,
         )
-        
+
         self.loading_label2 = ctk.CTkLabel(
             self.ls2,
             text="Optimizing...",
@@ -1270,30 +1324,23 @@ class main(ctk.CTk):
         # self.setResize(False)
         self.manyLabel = ctk.CTkLabel(
             self.sheetFrame,
-            text="number of required Sns:",
+            text="select Sns:",
         )
 
-        self.manyEntry = ctk.CTkEntry(
-            self.sheetFrame,
-        )
+        # self.manyEntry = ctk.CTkEntry(
+        #     self.sheetFrame,
+        # )
 
-        self.reqSnLabel2 = ctk.CTkLabel(
-            self.sheetFrame,
-            text="Required Sns:",
-        )
+        # self.reqSnLabel2 = ctk.CTkLabel(
+        #     self.sheetFrame,
+        #     text="Required Sns:",
+        # )
 
-        self.manyLabel.grid(row=0, column=0, sticky="nw", pady=5)
-        self.manyEntry.grid(row=0, column=1, padx=10, sticky="nw", columnspan=2, pady=5)
+        self.manyLabel.grid(row=0, column=0, padx=5)
+        # self.manyEntry.grid(row=0, column=1, padx=10, sticky="nw", columnspan=2, pady=5)
 
         self.entrs = []
 
-        self.button = ctk.CTkButton(
-            self.sheetFrame,
-            text="Generate",
-            command=self.buttonCommand,
-            fg_color="#5696b0",
-        )
-        self.button.grid(row=1, column=1, padx=10, pady=5, columnspan=2, sticky="nw")
         self.expB = ctk.CTkButton(
             self.sheetFrame,
             text="Export",
@@ -1302,10 +1349,9 @@ class main(ctk.CTk):
         )
         self.expB.grid(
             row=1,
-            column=3,
+            column=4,
             padx=10,
             pady=5,
-            columnspan=2,
         )
         items = self.cur.execute("SELECT profile FROM rawMaterial").fetchall()
         items = [item[0] for item in items]
@@ -1324,8 +1370,8 @@ class main(ctk.CTk):
         self.matP.set("Material Profiles")
 
         self.matP.grid(
-            row=0,
-            column=3,
+            row=1,
+            column=0,
             padx=10,
             pady=5,
             columnspan=2,
@@ -1335,30 +1381,17 @@ class main(ctk.CTk):
             self.sheetFrame,
             text="pitch factor: ",
         )
-        self.pFL.grid(
-            row=0,
-            column=5,
-            padx=10,
-            pady=5,
-            columnspan=2,
-        )
+        self.pFL.grid(row=1, column=2, padx=10, pady=5, columnspan=1, sticky="e")
         self.pFE = ctk.CTkEntry(
             self.sheetFrame,
         )
-        self.pFE.grid(
-            row=1,
-            column=5,
-            padx=10,
-            pady=5,
-            columnspan=2,
-        )
+        self.pFE.grid(row=1, column=3, padx=10, pady=5, columnspan=1, sticky="w")
 
         self.resizable(False, False)
-        
-        
+
     def lsexp(self):
         self.ls2.grid(
-            row=1,
+            row=2,
             column=0,
             columnspan=5,
             rowspan=5,
@@ -1367,7 +1400,7 @@ class main(ctk.CTk):
         #
 
     def exportF(self):
-        res = [("Diameter", "Sn", "Flat Die", "Cladding Die", "Weight (kg/6m)")]
+        res = []
         self.pitchFactorEntry.configure(state="normal")
         self.pitchFactorEntry.delete(0, ctk.END)
         self.pitchFactorEntry.insert(0, str(self.pFE.get()))
@@ -1379,15 +1412,26 @@ class main(ctk.CTk):
         self.pipeLengthEnry.insert(0, str(6000))
         tempSns = []
         for i in range(len(self.entrs)):
-            t = self.entrs[i].get()
+            t = self.entrs[i]
             if t != "" and self.isreal(t):
                 tempSns.append(float(t))
+
+        sns = {sn: [] for sn in tempSns}
+
+        print(sns)
+
+        Ds = {d[1]: [] for d in diameters}
 
         if len(tempSns) != 0:
             for d in diameters:
                 self.pipeDiameterEnry.delete(0, ctk.END)
                 self.pipeDiameterEnry.insert(0, str(d[1]))
+                flag = False
                 for sn in tempSns:
+                    if flag == False:
+                        Ds[d[1]].append(d[1])
+                        flag = True
+
                     self.reqSnEntries.delete(0, ctk.END)
                     self.reqSnEntries.insert(0, str(sn))
                     self.optimizedPR()
@@ -1402,13 +1446,81 @@ class main(ctk.CTk):
                         + str(self.PPFilmThicknessEntry.get()[0:-2])
                     )
                     if self.resError.cget("text") != "":
-                        tup = (d[1], float(sn), None, None, None)
+                        Ds[d[1]].append("-")
+                        Ds[d[1]].append("-")
+                        Ds[d[1]].append("-")
                     else:
-                        tup = (d[1], float(sn), fd, cd, round(self.W0, 2))
-                    res.append(tup)
+                        Ds[d[1]].append(fd)
+                        Ds[d[1]].append(cd)
+                        Ds[d[1]].append(round(self.W0, 2))
 
-        print(res[0])
-        for r in res[1:]:
+        columns_new = []
+        columns_new.append("Pipe Diameter")
+        for i in range(len(tempSns)):
+            columns_new.append("Flat Die")
+            columns_new.append("Cladding Die")
+            columns_new.append("Weight (kg/6m)")
+
+        columns_new.append("Elastic Modulus")
+
+        print(columns_new)
+
+        for d in Ds.values():
+            d.append(self.elastic_modulus)
+        data = [d for d in Ds.values()]
+        print(Ds)
+        # try:
+        #     writer = ExcelWriter(
+        #         "Production Table " + str(self.elastic_modulus) + "MPa.xlsx", mode="a" ,if_sheet_exists="replace"
+        #     )
+        # except:
+        #     writer = ExcelWriter(
+        #         "Production Table " + str(self.elastic_modulus) + "MPa.xlsx",
+        #     )
+
+        writer = ExcelWriter(
+            "Production Table " + str(self.elastic_modulus) + "MPa.xlsx",
+        )
+
+        thin = Side(border_style="thin", color="000000")
+
+        list1 = pd.DataFrame(data, columns=columns_new)
+        list1.to_excel(writer, "Optimized", index=False)
+        writer.close()
+
+        workbook = load_workbook(
+            "Production Table " + str(self.elastic_modulus) + "MPa.xlsx"
+        )
+        ws1 = workbook["Optimized"]
+        border = Border(top=thin, left=thin, right=thin, bottom=thin)
+        al = Alignment(horizontal="center", vertical="center")
+
+        ws1.insert_rows(1)
+
+        ws1.cell(row=1, column=1).value = "Stiffness"
+
+        for i, sn in enumerate(tempSns):
+            ws1.cell(row=1, column=i * 3 + 2).value = "SN" + str(sn)
+
+        ws1.cell(row=1, column=len(tempSns) * 3 + 2).value = "Remarks"
+        if len(tempSns) >= 1:
+            ws1.merge_cells("B1:D1")
+        if len(tempSns) >= 2:
+            ws1.merge_cells("E1:G1")
+        if len(tempSns) >= 3:
+            ws1.merge_cells("H1:J1")
+        if len(tempSns) >= 4:
+            ws1.merge_cells("K1:M1")
+        if len(tempSns) >= 5:
+            ws1.merge_cells("N1:P1")
+        if len(tempSns) >= 6:
+            ws1.merge_cells("Q1:S1")
+
+        self.style_worksheet(ws1, border=border, alignment=al)
+
+        workbook.save("Production Table " + str(self.elastic_modulus) + "MPa.xlsx")
+
+        for r in res:
             print(r)
         self.pipeLengthEnry.delete(0, ctk.END)
         self.pipeDiameterEnry.delete(0, ctk.END)
@@ -1417,66 +1529,98 @@ class main(ctk.CTk):
         self.reqSnEntries.insert(0, "8")
         self.flatDieProfile.set("Flat die profiles")
         self.claddingDieProfile.set("Cladding die profiles")
+        self.densityEntry.configure(state="normal")
+        self.elasticEntry.configure(state="normal")
+        self.shrinkageEntry.configure(state="normal")
+        self.pitchEntry.configure(state="normal")
+        self.WallThicknessEntry.configure(state="normal")
+        self.finalPitchEntry.configure(state="normal")
+        self.PPDiameterEntry.configure(state="normal")
+        self.PPFilmThicknessEntry.configure(state="normal")
+        
         self.densityEntry.delete(0, ctk.END)
         self.elasticEntry.delete(0, ctk.END)
         self.shrinkageEntry.delete(0, ctk.END)
+        self.pitchEntry.delete(0, ctk.END)
+        self.WallThicknessEntry.delete(0, ctk.END)
+        self.finalPitchEntry.delete(0, ctk.END)
+        self.PPDiameterEntry.delete(0, ctk.END)
+        self.PPFilmThicknessEntry.delete(0, ctk.END)
         
+        self.densityEntry.configure(state="disabled")
+        self.elasticEntry.configure(state="disabled")
+        self.shrinkageEntry.configure(state="disabled")
+        self.pitchEntry.configure(state="disabled")
+        self.WallThicknessEntry.configure(state="disabled")
+        self.finalPitchEntry.configure(state="disabled")
+        self.PPDiameterEntry.configure(state="disabled")
+        self.PPFilmThicknessEntry.configure(state="disabled")
+        for widget in self.resultsFrame.winfo_children():
+            widget.grid_forget()
+        for widget in self.MachineTabs.tab("Extruder").winfo_children():
+            widget.grid_forget()
+        for widget in self.MachineTabs.tab("Trolley Position").winfo_children():
+            widget.grid_forget()
+        for widget in self.MachineTabs.tab("Machine").winfo_children():
+            widget.grid_forget()
+
         self.ls2.grid_forget()
 
+    def style_worksheet(self, ws, border=Border(), alignment=None):
+        top = Border(top=border.top)
+        left = Border(left=border.left)
+        right = Border(right=border.right)
+        bottom = Border(bottom=border.bottom)
+
+        dims = {}
+
+        for row in ws.iter_rows():
+            for cell in row:
+                cell.alignment = alignment
+                cell.border = top + left + right + bottom
+                cell.font = Font(bold=False)
+
     def buttonCommand(self):
-        if self.manyEntry.get() == "" or self.manyEntry.get().isdigit() == False:
-            self.manyEntry.delete(0, ctk.END)
-            return
+        self.entrs = self.scrollable_checkbox_frame.get_checked_items()
+        for i in range(len(self.entrs)):
+            self.entrs[i] = int(self.entrs[i])
+
         if int(self.manyEntry.get()) > 2:
-            self.expB.grid(row=1, column=2, padx=10, pady=5, sticky="nw")
-            self.matP.grid(row=0, column=2, padx=10, pady=5, sticky="nw")
-            self.pFE.grid(row=1, column=3, padx=10, pady=5, sticky="nw")
-            self.pFL.grid(row=0, column=3, padx=10, pady=5, sticky="nw")
+            self.expB.grid(row=2, column=2, padx=10, pady=5, sticky="nw")
+            self.matP.grid(row=1, column=2, padx=10, pady=5, sticky="nw")
+            self.pFE.grid(row=2, column=3, padx=10, pady=5, sticky="nw")
+            self.pFL.grid(row=1, column=3, padx=10, pady=5, sticky="nw")
         else:
             self.expB.grid(
-                row=1,
+                row=2,
                 column=3,
                 padx=10,
                 pady=5,
                 columnspan=2,
             )
             self.matP.grid(
-                row=0,
+                row=1,
                 column=3,
                 padx=10,
                 pady=5,
                 columnspan=2,
             )
             self.pFE.grid(
-                row=1,
+                row=2,
                 column=5,
                 padx=10,
                 pady=5,
                 columnspan=2,
             )
             self.pFL.grid(
-                row=0,
+                row=1,
                 column=5,
                 padx=10,
                 pady=5,
                 columnspan=2,
             )
 
-        self.reqSnLabel2.grid(row=2, column=0, sticky="nw")
-
-        for i in range(1, int(self.manyEntry.get()) + 1):
-            self.entrs.append(
-                ctk.CTkEntry(
-                    self.sheetFrame,
-                )
-            )
-            self.entrs[-1].grid(
-                row=int(((i - 1) / 6) + 3),
-                column=(i - 1) % 6,
-                sticky="w",
-                pady=5,
-                padx=5,
-            )
+        self.reqSnLabel2.grid(row=3, column=0, sticky="nw")
 
     def f45(self, event):
         if self.FlatExtruder75Entry.get() != "":
