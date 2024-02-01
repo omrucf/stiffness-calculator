@@ -1501,8 +1501,10 @@ class main(ctk.CTk):
 
         for i, sn in enumerate(tempSns):
             ws1.cell(row=1, column=i * 3 + 2).value = "SN" + str(sn)
+            ws1.cell(row=1, column=i * 3 + 2).font = Font(bold=True)
 
         ws1.cell(row=1, column=len(tempSns) * 3 + 2).value = "Remarks"
+        ws1.cell(row=1, column=len(tempSns) * 3 + 2).font = Font(bold=True)
         if len(tempSns) >= 1:
             ws1.merge_cells("B1:D1")
         if len(tempSns) >= 2:
@@ -1515,10 +1517,14 @@ class main(ctk.CTk):
             ws1.merge_cells("N1:P1")
         if len(tempSns) >= 6:
             ws1.merge_cells("Q1:S1")
-
-        self.style_worksheet(ws1, border=border, alignment=al)
+            
+        
+   
+    
+        self.style_worksheet(ws1, border=border, alignment=al, itr=len(tempSns))
 
         workbook.save("Production Table " + str(self.elastic_modulus) + "MPa.xlsx")
+
 
         for r in res:
             print(r)
@@ -1565,8 +1571,12 @@ class main(ctk.CTk):
             widget.grid_forget()
 
         self.ls2.grid_forget()
+        
+        
+            
+        
 
-    def style_worksheet(self, ws, border=Border(), alignment=None):
+    def style_worksheet(self, ws, border=Border(), alignment=None, itr=0):
         top = Border(top=border.top)
         left = Border(left=border.left)
         right = Border(right=border.right)
@@ -1579,6 +1589,26 @@ class main(ctk.CTk):
                 cell.alignment = alignment
                 cell.border = top + left + right + bottom
                 cell.font = Font(bold=False)
+
+                
+        for i in range(itr):
+            ws.cell(row=1, column=i * 3 + 2).font = Font(bold=True)
+        ws.cell(row=1, column=itr * 3 + 2).font = Font(bold=True)
+        for i in range(itr*3+2):
+            ws.cell(row=2, column=i+1).font = Font(bold=True)
+        for col in ws.iter_cols(min_col = 1, max_col=1):
+            for cell in col:
+                cell.font = Font(bold=True)
+                
+        alphabet = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O", "P", "Q", "R", "S", "T"]
+                
+        for i, col in enumerate(ws.iter_cols()):
+            lenMax = 0
+            for cell in col:
+                if len(str(cell.value)) > lenMax:
+                    lenMax = len(str(cell.value))
+                    ws.column_dimensions[alphabet[i]].width = lenMax             
+        
 
     def buttonCommand(self):
         self.entrs = self.scrollable_checkbox_frame.get_checked_items()
